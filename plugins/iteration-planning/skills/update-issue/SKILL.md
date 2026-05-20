@@ -65,10 +65,118 @@ If either file is unavailable, continue with available context and explicitly st
 16. Only after confirmation, update the same issue in `glific/glific` using `gh`:
    - `gh issue edit <issue-number> --repo glific/glific --title "[<category>]: <updated title>" --body "<structured markdown content>" --add-label "<category>"`
 17. Confirm back with the updated issue URL.
+18. Ask the user (via `AskQuestion`) whether to add or update the issue in the **DEV Priorities** GitHub project.
+19. If yes:
+    - Fetch upcoming iterations (see **Project Board Assignment** below).
+    - Ask for **Priority** (P0, P1, P2, or P3) and **Iteration** (from the fetched list) via `AskQuestion`.
+20. Execute the project board assignment steps described in the **Project Board Assignment** section.
+
+## Project Board Assignment
+
+Use these exact IDs and API calls when adding or updating an issue on the DEV Priorities project.
+
+**Fixed IDs (do not change):**
+- Project number: `8`, owner: `glific`
+- Project node ID: `PVT_kwDOA_E5C84AUMGc`
+- Priority field ID: `PVTSSF_lADOA_E5C84AUMGczg_5jSs`
+  - P0 option ID: `676bd10e`
+  - P1 option ID: `2792e7da`
+  - P2 option ID: `6bf6e802`
+  - P3 option ID: `3b907b58`
+- Iteration field ID: `PVTIF_lADOA_E5C84AUMGczgM5uHk`
+
+**Step 1 — fetch upcoming iterations** to present to the user:
+```bash
+gh api graphql -f query='
+query {
+  organization(login: "glific") {
+    projectV2(number: 8) {
+      fields(first: 20) {
+        nodes {
+          ... on ProjectV2IterationField {
+            name
+            configuration { iterations { id title startDate } }
+          }
+        }
+      }
+    }
+  }
+}'
+```
+Present the `iterations` list (title + startDate) to the user and ask them to pick one via `AskQuestion`.
+
+**Step 2 — resolve project item ID** (add to project only if not already present):
+```bash
+gh api graphql -f query='
+query {
+  repository(owner: "glific", name: "glific") {
+    issue(number: <issue-number>) {
+      projectItems(first: 10) {
+        nodes {
+          id
+          project { ... on ProjectV2 { number } }
+        }
+      }
+    }
+  }
+}'
+```
+- If an item exists for project number `8`, use its `id` as `itemId` and **skip** `gh project item-add`.
+- Otherwise add the issue, then fetch `itemId` from the project items list (same query as create-issue Step 3):
+```bash
+gh project item-add 8 --owner glific --url <issue-url>
+```
+```bash
+gh api graphql -f query='
+query {
+  organization(login: "glific") {
+    projectV2(number: 8) {
+      items(last: 5) {
+        nodes {
+          id
+          content { ... on Issue { number } }
+        }
+      }
+    }
+  }
+}'
+```
+Match on the issue number to get the `itemId`.
+
+**Step 3 — set Priority:**
+```bash
+gh api graphql -f query='
+mutation {
+  updateProjectV2ItemFieldValue(input: {
+    projectId: "PVT_kwDOA_E5C84AUMGc"
+    itemId: "<itemId>"
+    fieldId: "PVTSSF_lADOA_E5C84AUMGczg_5jSs"
+    value: { singleSelectOptionId: "<priority-option-id>" }
+  }) { projectV2Item { id } }
+}'
+```
+
+**Step 4 — set Iteration:**
+```bash
+gh api graphql -f query='
+mutation {
+  updateProjectV2ItemFieldValue(input: {
+    projectId: "PVT_kwDOA_E5C84AUMGc"
+    itemId: "<itemId>"
+    fieldId: "PVTIF_lADOA_E5C84AUMGczgM5uHk"
+    value: { iterationId: "<iteration-id>" }
+  }) { projectV2Item { id } }
+}'
+```
+
+Confirm back with the issue URL, assigned priority, and iteration name.
+
+Requires `gh auth refresh -s read:project` (and project write scope) if project commands fail.
 
 ## GitHub issue management rules (must enforce)
 
 - Do not update a GitHub issue unless the user has explicitly confirmed issue update in the current chat turn.
+- Do not add or update DEV Priorities project fields unless the user has explicitly confirmed in the current chat turn.
 - Always read the existing issue content from GitHub first; do not ask the user to paste the existing issue description unless issue access fails.
 - Always update the issue in the `glific/glific` repository unless the user explicitly overrides this.
 - Always require exactly one category from: `security`, `bug`, `ops`, `ci`, `testing`, `enhancement`, `docs`, `refactor`, or `<epic-name>`.
@@ -124,6 +232,7 @@ For any question not answered by the existing issue body, optional user instruct
   - expected behavior and success conditions
   - rollout constraints (feature flag, backwards compatibility, migration risk)
   - QA scope (edge/failure cases)
+  - DEV Priorities placement (yes/no), priority (P0–P3), and iteration when adding or updating on the project board
 - Avoid asking for information already inferable from the issue body or `CLAUDE.md`.
 - Do not ask speculative or low-value preference questions.
 
@@ -135,9 +244,6 @@ Return only:
 ## Description
 ...
 
-## User Flow
-...
-
 ## Acceptance Criteria
 ...
 
@@ -147,6 +253,7 @@ Return only:
 
 # Guidelines
 - Do not add extra sections.
+- Do not include a **User Flow** section in the issue body or preview.
 - Do not create sections like "Backend Requirements", "Frontend Requirements", "Technical Requirements", or any implementation-specific breakdown.
 - Keep all content high-level and user-facing.
 - Do not ask follow-up questions unless absolutely required to avoid unsafe or invalid assumptions.
