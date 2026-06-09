@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sr. Elixir Developer — Candidate Scoring Report</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #f4f6f9; color: #1a1a2e; font-size: 13px; }
+.page { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+/* ── HEADER ── */
+.header { background: linear-gradient(135deg, #1F3864 0%, #2E5F8A 100%);
+  color: white; padding: 28px 32px; border-radius: 12px; margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(31,56,100,0.3); }
+.header-top { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+.header .meta { font-size: 12px; opacity: 0.85; margin-top: 5px; }
+.header .meta span { margin-right: 18px; }
+.count-badge { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 8px; padding: 10px 18px; text-align: center; flex-shrink: 0; }
+.count-badge .num { font-size: 32px; font-weight: 900; line-height: 1; }
+.count-badge .lbl { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.pill { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+  padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.sample-banner { background: #C9A227; color: white; text-align: center;
+  padding: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+  border-radius: 6px; margin-bottom: 16px; }
+
+/* ── SECTION WRAPPER ── */
+.section { background: white; border-radius: 10px; padding: 20px 22px;
+  margin-bottom: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
+.section-title { font-size: 14px; font-weight: 800; color: #1F3864;
+  margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #BDD7EE;
+  display: flex; align-items: center; gap: 8px; }
+
+/* ── WEIGHT LEGEND ── */
+.weight-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.w-pill { border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; gap: 6px; }
+.w-pill .pct { background: rgba(255,255,255,0.35); border-radius: 10px;
+  padding: 1px 6px; font-size: 11px; }
+
+/* ── SCORING TABLE ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+thead th { background: #1F3864; color: white; padding: 10px 8px; text-align: center;
+  font-size: 11px; font-weight: 700; white-space: nowrap; position: sticky; top: 0; z-index: 2; }
+thead th:first-child { border-radius: 6px 0 0 0; text-align: center; }
+thead th:last-child { border-radius: 0 6px 0 0; min-width: 80px; }
+tbody tr:nth-child(odd) td { background: #f8fafc; }
+tbody tr:hover td { background: #eef4fb !important; }
+tbody td { padding: 8px 7px; text-align: center; border-bottom: 1px solid #e8ecf0; vertical-align: middle; }
+tbody td:nth-child(3) { text-align: left; font-size: 11px; color: #555; }
+.rank-badge { width: 26px; height: 26px; border-radius: 50%; display: inline-flex;
+  align-items: center; justify-content: center; font-weight: 800; font-size: 12px;
+  color: white; margin: 0 auto; }
+.r1 { background: #C9A227; }
+.r2 { background: #9E9E9E; }
+.r3 { background: #A0522D; }
+.rn { background: #1F3864; font-size: 11px; }
+.name-cell { text-align: left !important; font-weight: 700; padding-left: 10px !important; }
+.score-hi  { background: #C6EFCE !important; color: #375623; font-weight: 700; }
+.score-mid { background: #FFEB9C !important; color: #9C6500; font-weight: 600; }
+.score-lo  { background: #FFC7CE !important; color: #9C0006; font-weight: 600; }
+.score-zero { background: #FF0000 !important; color: white; font-weight: 700; }
+.score-w { background: #1F3864 !important; color: white; font-weight: 800;
+  font-size: 14px; border-radius: 4px; }
+
+/* ── BAR CHART ── */
+.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+.bar-name { width: 170px; text-align: right; font-size: 12px; font-weight: 600;
+  color: #333; flex-shrink: 0; }
+.bar-wrap { flex: 1; background: #eef2f7; border-radius: 6px; height: 26px;
+  position: relative; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center;
+  justify-content: flex-end; padding-right: 8px; font-size: 11px; font-weight: 700;
+  color: white; transition: width 0.3s; }
+.bar-top  { background: linear-gradient(90deg, #1F3864, #2E5F8A); }
+.bar-mid  { background: linear-gradient(90deg, #E65100, #F57C00); }
+.bar-lo   { background: linear-gradient(90deg, #B71C1C, #E53935); }
+.bar-ann  { font-size: 11px; color: #C9A227; font-weight: 700; flex-shrink: 0; }
+
+/* ── CARDS ── */
+.cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.card { border: 1px solid #dde3ec; border-radius: 10px; overflow: hidden; }
+.card-header { background: #1F3864; color: white; padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px; }
+.card-rank { width: 30px; height: 30px; border-radius: 50%; display: flex; font-size: 13px;
+  align-items: center; justify-content: center; font-weight: 800; color: white; flex-shrink: 0; }
+.card-name { font-weight: 700; font-size: 14px; }
+.card-sub { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+.verdict { margin-left: auto; padding: 3px 10px; border-radius: 12px; font-size: 11px;
+  font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+.v-green { background: #C6EFCE; color: #375623; }
+.v-star  { background: #C9A227; color: white; }
+.v-amber { background: #FFEB9C; color: #9C6500; }
+.v-red   { background: #FFC7CE; color: #9C0006; }
+.v-dark-red { background: #FF0000; color: white; }
+.card-body { display: grid; grid-template-columns: 1fr 1fr; }
+.pros, .cons { padding: 12px 14px; }
+.pros { background: #f0faf0; }
+.cons { background: #fff5f5; }
+.pc-title { font-size: 11px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.5px; margin-bottom: 8px; }
+.pros .pc-title { color: #375623; }
+.cons .pc-title { color: #9C0006; }
+.pc-list { list-style: none; padding: 0; }
+.pc-list li { font-size: 11px; color: #444; line-height: 1.4; margin-bottom: 5px;
+  padding-left: 14px; position: relative; }
+.pc-list li::before { content: "•"; position: absolute; left: 0; }
+.pros .pc-list li::before { color: #375623; }
+.cons .pc-list li::before { color: #9C0006; }
+.card-note { background: #f4f6f9; padding: 8px 14px; font-size: 11px;
+  font-style: italic; color: #555; border-top: 1px solid #e0e6ed; }
+
+/* ── CRITERIA GUIDE ── */
+.crit-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.crit-table th { background: #2E5F8A; color: white; padding: 8px 12px; text-align: left; }
+.crit-table td { padding: 8px 12px; border-bottom: 1px solid #e8ecf0; vertical-align: top; }
+.crit-table tr:nth-child(odd) td { background: #f8fafc; }
+.crit-weight { font-weight: 700; color: #1F3864; white-space: nowrap; }
+.rationale { margin-top: 14px; background: #f0f4f9; padding: 12px 14px;
+  border-radius: 6px; font-size: 12px; line-height: 1.6; color: #444;
+  border-left: 3px solid #2E5F8A; }
+
+/* ── RECOMMENDATION ── */
+.rec-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.rec-table th { background: #1F3864; color: white; padding: 10px 14px; text-align: left; }
+.rec-table td { padding: 10px 14px; border-bottom: 1px solid #e8ecf0; vertical-align: top; }
+.rec-table tr:nth-child(odd) td { background: #f8fafc; }
+.tier-label { font-weight: 700; font-size: 13px; white-space: nowrap; }
+.tier-1 { color: #C9A227; }
+.tier-2 { color: #9E9E9E; }
+.tier-3 { color: #A0522D; }
+.tier-x { color: #9C0006; }
+
+@media print {
+  .cards-grid { grid-template-columns: 1fr; }
+  .section { break-inside: avoid; }
+}
+@media (max-width: 700px) {
+  .cards-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- Sample banner -->
+<div class="sample-banner">⚡ SAMPLE OUTPUT — Generated by the candidate-reviewer skill · All names are fictional</div>
+
+<!-- ══════════ HEADER ══════════ -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>Sr. Elixir Developer</h1>
+      <div class="meta">
+        <span>🏢 Acme Technologies Pvt Ltd</span>
+        <span>💰 ₹18–28 LPA</span>
+        <span>📍 Remote-friendly</span>
+      </div>
+      <div class="pills">
+        <span class="pill">Elixir / Phoenix</span>
+        <span class="pill">OTP / GenServer</span>
+        <span class="pill">LiveView</span>
+        <span class="pill">PostgreSQL</span>
+        <span class="pill">REST / GraphQL APIs</span>
+        <span class="pill">5+ yrs experience</span>
+        <span class="pill">Python / Ruby transition welcome</span>
+      </div>
+    </div>
+    <div class="count-badge">
+      <div class="num">9</div>
+      <div class="lbl">Candidates<br>Evaluated</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ WEIGHT LEGEND ══════════ -->
+<div class="section">
+  <div class="section-title">⚖️ Scoring Dimensions &amp; Weights</div>
+  <div class="weight-pills">
+    <span class="w-pill" style="background:#1F3864;color:white">Elixir/OTP Core <span class="pct">28%</span></span>
+    <span class="w-pill" style="background:#2E5F8A;color:white">Experience &amp; Seniority <span class="pct">15%</span></span>
+    <span class="w-pill" style="background:#C9A227;color:white">Backend Architecture <span class="pct">14%</span></span>
+    <span class="w-pill" style="background:#375623;color:white">Testing Culture <span class="pct">10%</span></span>
+    <span class="w-pill" style="background:#7B3F00;color:white">Database &amp; PostgreSQL <span class="pct">10%</span></span>
+    <span class="w-pill" style="background:#4A4A8A;color:white">API Design <span class="pct">10%</span></span>
+    <span class="w-pill" style="background:#555;color:white">DevOps / CI-CD <span class="pct">7%</span></span>
+    <span class="w-pill" style="background:#888;color:white">Leadership &amp; Mentorship <span class="pct">6%</span></span>
+  </div>
+</div>
+
+<!-- ══════════ SCORING MATRIX ══════════ -->
+<div class="section">
+  <div class="section-title">📊 Candidate Scoring Matrix</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Candidate</th>
+          <th style="text-align:left">Primary Background</th>
+          <th>Elixir/OTP<br><small>28%</small></th>
+          <th>Exp &amp; Seniority<br><small>15%</small></th>
+          <th>Architecture<br><small>14%</small></th>
+          <th>Testing<br><small>10%</small></th>
+          <th>Database<br><small>10%</small></th>
+          <th>API Design<br><small>10%</small></th>
+          <th>DevOps<br><small>7%</small></th>
+          <th>Leadership<br><small>6%</small></th>
+          <th>Weighted<br>Score /10</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="rank-badge r1">1</div></td>
+          <td class="name-cell">Candidate A</td>
+          <td>Elixir · Phoenix · OTP · LiveView</td>
+          <td class="score-hi">10</td>
+          <td class="score-mid">6</td>
+          <td class="score-hi">8</td>
+          <td class="score-hi">8</td>
+          <td class="score-hi">8</td>
+          <td class="score-hi">8</td>
+          <td class="score-mid">6</td>
+          <td class="score-mid">5</td>
+          <td class="score-w">7.79</td>
+        </tr>
+        <tr>
+          <td><div class="rank-badge r2">2</div></td>
+          <td class="name-cell">Candidate B</td>
+          <td>Node.js · Python · Microservices · GraphQL</td>
+          <td class="score-mid">5</td>
+          <td class="score-hi">8</td>
+          <td class="score-hi">8</td>
+          <td class="score-mid">7</td>
+          <td class="score-mid">7</td>
+          <td class="score-hi">9</td>
+          <td class="score-hi">8</td>
+          <td class="score-mid">7</td>
+          <td class="score-w">6.61</td>
+        </tr>
+        <tr>
+          <td><div class="rank-badge r3">3</div></td>
+          <td class="name-cell">Candidate C</td>
+          <td>Python · Django · AWS · PostgreSQL</td>
+          <td class="score-mid">5</td>
+          <td class="score-mid">7</td>
+          <td class="score-mid">7</td>
+          <td class="score-hi">8</td>
+          <td class="score-hi">8</td>
+          <td class="score-mid">6</td>
+          <td class="score-hi">8</td>
+          <td class="score-mid">5</td>
+          <td class="score-w">6.36</td>
+        </tr>
+        <tr>
+          <td><div class="rank-badge rn">4</div></td>
+          <td class="name-cell">Candidate D</td>
+          <td>Python · FastAPI · Docker · PostgreSQL</td>
+          <td class="score-mid">5</td>
+          <td class="score-mid">7</td>
+          <td class="score-mid">6</td>
+          <td class="score-mid">7</td>
+          <td class="score-hi">8</td>
+          <td class="score-mid">7</td>
+          <td class="score-hi">9</td>
+          <td class="score-mid">6</td>
+          <td class="score-w">6.24</td>
+        </tr>
+        <tr>
+          <td><div class="rank-badge rn">5</div></td>
+          <td class="name-cell">Candidate E</td>
+          <td>Python · Django · React · AWS</td>
+          <td class="score-lo">4</td>
+          <td class="score-mid">6</td>
+          <td class="score-mid">6</td>
+          <td class="score-mid">6</td>
+          <td class="score-mid">6</td>
+          <td class="score-mid">5</td>
+          <td class="score-mid">6</td>
+          <td class="score-lo">4</td>
+          <td class="score-w">5.37</td>
+        </tr>
+        <tr>
+          <td><div class="rank-badge rn">6</div></td>
+          <td class="name-cell">Candidate F</td>
+          <td>Ruby on Rails · PostgreSQL · REST APIs</td>
+          <td class="score-lo">4</td>
+          <td class="score-mid">6</td>
+          <td class="score-mid">5</td>
+          <td class="score-mid">6</td>
+          <td class="score-mid">7</td>
+          <td class="score-mid">5</td>
+          <td class="score-lo">4</td>
+          <td class="score-lo">4</td>
+          <td class="score-w">5.15</td>
+        </tr>
+        <tr>
+          <td><div class="rank-badge rn">7</div></td>
+          <td class="name-cell">Candidate G</td>
+          <td>React · Node.js · Full Stack</td>
+          <td class="score-lo">3</td>
+          <td class="score-mid">5</td>
+          <td class="score-lo">4</td>
+          <td class="score-mid">5</td>
+          <td class="score-lo">4</td>
+          <td class="score-mid">6</td>
+          <td class="score-mid">5</td>
+          <td class="score-lo">3</td>
+          <td class="score-w">4.70</td>
+        </tr>
+        <tr>
+          <td><div class="rank-badge rn">8</div></td>
+          <td class="name-cell">Candidate H</td>
+          <td>Java · Spring Boot · Microservices</td>
+          <td class="score-lo">2</td>
+          <td class="score-lo">4</td>
+          <td class="score-lo">4</td>
+          <td class="score-lo">4</td>
+          <td class="score-mid">5</td>
+          <td class="score-lo">4</td>
+          <td class="score-lo">4</td>
+          <td class="score-lo">3</td>
+          <td class="score-w">3.81</td>
+        </tr>
+        <tr>
+          <td><div class="rank-badge rn">9</div></td>
+          <td class="name-cell">Candidate I</td>
+          <td>.NET · C# · SQL Server · Azure</td>
+          <td class="score-zero">0</td>
+          <td class="score-lo">4</td>
+          <td class="score-lo">3</td>
+          <td class="score-lo">3</td>
+          <td class="score-lo">4</td>
+          <td class="score-lo">3</td>
+          <td class="score-lo">3</td>
+          <td class="score-lo">2</td>
+          <td class="score-w">2.84</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════ BAR CHART ══════════ -->
+<div class="section">
+  <div class="section-title">📈 Weighted Score Comparison</div>
+  <div style="padding: 4px 0;">
+    <div class="bar-row">
+      <div class="bar-name">Candidate A</div>
+      <div class="bar-wrap"><div class="bar-fill bar-top" style="width:77.9%">7.79</div></div>
+      <div class="bar-ann">⭐ Top Elixir Pick</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-name">Candidate B</div>
+      <div class="bar-wrap"><div class="bar-fill bar-top" style="width:66.1%">6.61</div></div>
+      <div class="bar-ann"></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-name">Candidate C</div>
+      <div class="bar-wrap"><div class="bar-fill bar-top" style="width:63.6%">6.36</div></div>
+      <div class="bar-ann"></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-name">Candidate D</div>
+      <div class="bar-wrap"><div class="bar-fill bar-top" style="width:62.4%">6.24</div></div>
+      <div class="bar-ann"></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-name">Candidate E</div>
+      <div class="bar-wrap"><div class="bar-fill bar-mid" style="width:53.7%">5.37</div></div>
+      <div class="bar-ann"></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-name">Candidate F</div>
+      <div class="bar-wrap"><div class="bar-fill bar-mid" style="width:51.5%">5.15</div></div>
+      <div class="bar-ann"></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-name">Candidate G</div>
+      <div class="bar-wrap"><div class="bar-fill bar-lo" style="width:47.0%">4.70</div></div>
+      <div class="bar-ann"></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-name">Candidate H</div>
+      <div class="bar-wrap"><div class="bar-fill bar-lo" style="width:38.1%">3.81</div></div>
+      <div class="bar-ann"></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-name">Candidate I</div>
+      <div class="bar-wrap"><div class="bar-fill bar-lo" style="width:28.4%">2.84</div></div>
+      <div class="bar-ann"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PROS & CONS CARDS ══════════ -->
+<div class="section">
+  <div class="section-title">🃏 Candidate Profiles</div>
+  <div class="cards-grid">
+
+    <!-- Candidate A -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-rank r1">1</div>
+        <div>
+          <div class="card-name">Candidate A</div>
+          <div class="card-sub">Elixir · Phoenix · OTP · LiveView · 3 yrs Elixir</div>
+        </div>
+        <span class="verdict v-star">⭐ Top Elixir Pick</span>
+      </div>
+      <div class="card-body">
+        <div class="pros">
+          <div class="pc-title">✅ Strengths</div>
+          <ul class="pc-list">
+            <li>Only candidate with direct Elixir/Phoenix production experience</li>
+            <li>Hands-on OTP, GenServer, and supervision tree design</li>
+            <li>LiveView experience directly matches role requirements</li>
+            <li>Strong PostgreSQL depth including query optimisation</li>
+            <li>REST and GraphQL API design background</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <div class="pc-title">⚠️ Gaps</div>
+          <ul class="pc-list">
+            <li>Total experience (3–4 yrs) is below the 5+ yr requirement</li>
+            <li>Limited evidence of team leadership or mentoring</li>
+            <li>DevOps and CI-CD skills not prominently featured</li>
+            <li>Smaller company context — scale exposure unclear</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card-note">The only pure Elixir candidate in the pool; the seniority gap is offset by being uniquely production-ready on the core stack.</div>
+    </div>
+
+    <!-- Candidate B -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-rank r2">2</div>
+        <div>
+          <div class="card-name">Candidate B</div>
+          <div class="card-sub">Node.js · Python · Microservices · GraphQL · 6 yrs</div>
+        </div>
+        <span class="verdict v-green">✅ Strong Consider</span>
+      </div>
+      <div class="card-body">
+        <div class="pros">
+          <div class="pc-title">✅ Strengths</div>
+          <ul class="pc-list">
+            <li>Exceptional GraphQL and microservices depth (9/10 API Design)</li>
+            <li>6+ years of backend experience meets seniority bar</li>
+            <li>Strong architecture ownership across distributed systems</li>
+            <li>Solid DevOps and CI-CD pipeline experience</li>
+            <li>Leadership experience mentoring junior engineers</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <div class="pc-title">⚠️ Gaps</div>
+          <ul class="pc-list">
+            <li>No Elixir/Phoenix exposure — will need ramp-up time</li>
+            <li>OTP/BEAM concurrency model is conceptually unfamiliar</li>
+            <li>Node.js/Python paradigms may slow initial productivity</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card-note">Best overall engineer in the pool; Elixir ramp-up is the only real risk given strong foundations.</div>
+    </div>
+
+    <!-- Candidate C -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-rank r3">3</div>
+        <div>
+          <div class="card-name">Candidate C</div>
+          <div class="card-sub">Python · Django · AWS · PostgreSQL · 5 yrs</div>
+        </div>
+        <span class="verdict v-green">✅ Strong Consider</span>
+      </div>
+      <div class="card-body">
+        <div class="pros">
+          <div class="pc-title">✅ Strengths</div>
+          <ul class="pc-list">
+            <li>Deep PostgreSQL expertise — closest to Elixir's typical DB layer</li>
+            <li>Strong AWS and DevOps background</li>
+            <li>Solid testing practices and CI-CD discipline</li>
+            <li>Meets the 5+ yr experience requirement</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <div class="pc-title">⚠️ Gaps</div>
+          <ul class="pc-list">
+            <li>No Elixir or functional programming background</li>
+            <li>Architecture ownership is at service level, not system level</li>
+            <li>Limited leadership or mentoring evidence</li>
+            <li>API design depth less demonstrated than Candidate B</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card-note">Solid choice if the team values DevOps maturity; DB depth is a genuine strength for this role.</div>
+    </div>
+
+    <!-- Candidate D -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-rank rn">4</div>
+        <div>
+          <div class="card-name">Candidate D</div>
+          <div class="card-sub">Python · FastAPI · Docker · PostgreSQL · 5 yrs</div>
+        </div>
+        <span class="verdict v-green">✅ Consider</span>
+      </div>
+      <div class="card-body">
+        <div class="pros">
+          <div class="pc-title">✅ Strengths</div>
+          <ul class="pc-list">
+            <li>Best DevOps/CI-CD score in the pool (9/10)</li>
+            <li>FastAPI background maps reasonably to Phoenix patterns</li>
+            <li>Strong PostgreSQL database skills</li>
+            <li>Meets 5 yr experience bar</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <div class="pc-title">⚠️ Gaps</div>
+          <ul class="pc-list">
+            <li>No Elixir experience; functional programming exposure unclear</li>
+            <li>Architecture score lower than Candidates B and C</li>
+            <li>Limited evidence of API design beyond REST basics</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card-note">Worth interviewing if DevOps maturity is a priority; weaker on architecture and API design than top competitors.</div>
+    </div>
+
+    <!-- Candidate E -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-rank rn">5</div>
+        <div>
+          <div class="card-name">Candidate E</div>
+          <div class="card-sub">Python · Django · React · AWS · 4 yrs</div>
+        </div>
+        <span class="verdict v-amber">🟡 Borderline</span>
+      </div>
+      <div class="card-body">
+        <div class="pros">
+          <div class="pc-title">✅ Strengths</div>
+          <ul class="pc-list">
+            <li>Python/Django background is a JD-acknowledged transition path</li>
+            <li>AWS cloud experience is a plus</li>
+            <li>Full-stack context useful for Phoenix + LiveView</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <div class="pc-title">⚠️ Gaps</div>
+          <ul class="pc-list">
+            <li>4 yrs experience is below the 5+ yr requirement</li>
+            <li>Weak evidence of architecture ownership</li>
+            <li>No Elixir or OTP knowledge stated</li>
+            <li>Limited mentoring or leadership evidence</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card-note">Good raw material but likely needs another year of seniority before this role.</div>
+    </div>
+
+    <!-- Candidate F -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-rank rn">6</div>
+        <div>
+          <div class="card-name">Candidate F</div>
+          <div class="card-sub">Ruby on Rails · PostgreSQL · REST APIs · 5 yrs</div>
+        </div>
+        <span class="verdict v-amber">🟡 Consider</span>
+      </div>
+      <div class="card-body">
+        <div class="pros">
+          <div class="pc-title">✅ Strengths</div>
+          <ul class="pc-list">
+            <li>Ruby background closest to Elixir's BEAM ecosystem mindset</li>
+            <li>PostgreSQL depth is strong and directly applicable</li>
+            <li>Meets the 5 yr experience bar</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <div class="pc-title">⚠️ Gaps</div>
+          <ul class="pc-list">
+            <li>No Elixir/OTP experience despite Ruby background</li>
+            <li>DevOps and CI-CD evidence is thin</li>
+            <li>Architecture and API design scores are weak</li>
+            <li>Leadership evidence absent from resume</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card-note">Ruby background makes the Elixir transition conceptually easier, but needs to demonstrate that adaptability in interview.</div>
+    </div>
+
+    <!-- Candidate G -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-rank rn">7</div>
+        <div>
+          <div class="card-name">Candidate G</div>
+          <div class="card-sub">React · Node.js · Full Stack · 4 yrs</div>
+        </div>
+        <span class="verdict v-red">🔴 Weak Match</span>
+      </div>
+      <div class="card-body">
+        <div class="pros">
+          <div class="pc-title">✅ Strengths</div>
+          <ul class="pc-list">
+            <li>Node.js async patterns have some conceptual overlap with BEAM</li>
+            <li>API experience provides a baseline</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <div class="pc-title">⚠️ Gaps</div>
+          <ul class="pc-list">
+            <li>Primarily a frontend/full-stack profile, not backend-focused</li>
+            <li>No backend architecture or DB ownership evidence</li>
+            <li>Below the seniority bar at 4 yrs</li>
+            <li>No Elixir, functional, or concurrent programming experience</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card-note">Would need a fundamental pivot from frontend to backend Elixir — too large a gap for a senior hire.</div>
+    </div>
+
+    <!-- Candidate H -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-rank rn">8</div>
+        <div>
+          <div class="card-name">Candidate H</div>
+          <div class="card-sub">Java · Spring Boot · Microservices · 4 yrs</div>
+        </div>
+        <span class="verdict v-red">🔴 Weak Match</span>
+      </div>
+      <div class="card-body">
+        <div class="pros">
+          <div class="pc-title">✅ Strengths</div>
+          <ul class="pc-list">
+            <li>Microservices architecture experience is transferable</li>
+            <li>Java/Spring Boot shows strong backend discipline</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <div class="pc-title">⚠️ Gaps</div>
+          <ul class="pc-list">
+            <li>Java is not an acknowledged pathway in this JD</li>
+            <li>No functional programming exposure</li>
+            <li>OTP concurrency model is entirely foreign</li>
+            <li>Below the 5 yr seniority requirement</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card-note">Solid Java engineer but the paradigm shift to Elixir's actor model is steep without any functional foundation.</div>
+    </div>
+
+    <!-- Candidate I -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-rank rn">9</div>
+        <div>
+          <div class="card-name">Candidate I</div>
+          <div class="card-sub">.NET · C# · SQL Server · Azure · 5 yrs</div>
+        </div>
+        <span class="verdict v-dark-red">🔴 No Match</span>
+      </div>
+      <div class="card-body">
+        <div class="pros">
+          <div class="pc-title">✅ Strengths</div>
+          <ul class="pc-list">
+            <li>5 yrs experience meets the seniority bar</li>
+            <li>Backend development background is relevant broadly</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <div class="pc-title">⚠️ Gaps</div>
+          <ul class="pc-list">
+            <li>Entirely Microsoft stack (.NET/C#/Azure/SQL Server) — no Elixir exposure</li>
+            <li>No functional or concurrent programming experience</li>
+            <li>Not an acknowledged transition pathway in the JD</li>
+            <li>Architecture and API style differ significantly from Phoenix norms</li>
+            <li>Zero score on the highest-weighted dimension (Elixir/OTP)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card-note">Wrong technology domain — moving from .NET to Elixir would require a near-complete re-skilling effort. Do not proceed for this role.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════ CRITERIA GUIDE ══════════ -->
+<div class="section">
+  <div class="section-title">📐 Scoring Criteria Guide</div>
+  <table class="crit-table">
+    <thead>
+      <tr><th>Dimension</th><th>Weight</th><th>Scale Guide</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Elixir / OTP Core</strong></td>
+        <td class="crit-weight">28%</td>
+        <td>10 = production Elixir + OTP + LiveView · 7–8 = strong adjacent (Erlang/Gleam) · 5–6 = acknowledged pathway (Python/Ruby) · 3–4 = weak adjacent (functional concepts only) · 0 = unrelated stack</td>
+      </tr>
+      <tr>
+        <td><strong>Experience &amp; Seniority</strong></td>
+        <td class="crit-weight">15%</td>
+        <td>9–10 = 8+ yrs senior-level · 7–8 = 5–7 yrs with clear progression · 5–6 = 4–5 yrs or unclear arc · 3–4 = &lt;4 yrs or mostly junior</td>
+      </tr>
+      <tr>
+        <td><strong>Backend Architecture</strong></td>
+        <td class="crit-weight">14%</td>
+        <td>9–10 = system design ownership, distributed systems · 7–8 = service-level design, clear patterns · 5–6 = follows patterns, limited design ownership · 3–4 = feature development only</td>
+      </tr>
+      <tr>
+        <td><strong>Testing Culture</strong></td>
+        <td class="crit-weight">10%</td>
+        <td>9–10 = TDD, automation, coverage metrics cited · 7–8 = strong testing discipline evidenced · 5–6 = unit testing mentioned · 3–4 = minimal testing evidence</td>
+      </tr>
+      <tr>
+        <td><strong>Database &amp; PostgreSQL</strong></td>
+        <td class="crit-weight">10%</td>
+        <td>9–10 = PostgreSQL specialist, query optimisation, migrations · 7–8 = strong SQL/Postgres proficiency · 5–6 = general SQL competence · 3–4 = basic CRUD only or NoSQL-primary</td>
+      </tr>
+      <tr>
+        <td><strong>API Design</strong></td>
+        <td class="crit-weight">10%</td>
+        <td>9–10 = REST + GraphQL design ownership · 7–8 = strong REST, some GraphQL · 5–6 = REST competent · 3–4 = API consumer, limited design</td>
+      </tr>
+      <tr>
+        <td><strong>DevOps / CI-CD</strong></td>
+        <td class="crit-weight">7%</td>
+        <td>9–10 = pipeline ownership, Docker, Kubernetes, cloud-native · 7–8 = solid CI-CD experience · 5–6 = basic pipeline usage · 3–4 = limited ops exposure</td>
+      </tr>
+      <tr>
+        <td><strong>Leadership &amp; Mentorship</strong></td>
+        <td class="crit-weight">6%</td>
+        <td>9–10 = team lead, hires, sets culture · 7–8 = mentors juniors, drives code review · 5–6 = occasional mentoring mentioned · 3–4 = individual contributor only</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="rationale">
+    <strong>Why Elixir/OTP at 28%?</strong> This is a specialist Elixir role in a company whose product is built on the BEAM. The core language and runtime are not learnable on the job at senior level — someone writing production OTP supervision trees from week one is fundamentally different from someone ramp-up learning. The 28% weight ensures the one genuine Elixir expert (Candidate A) surfaces clearly, while still allowing strong generalist engineers (Candidates B, C) to rank competitively for their architectural and API depth.
+  </div>
+</div>
+
+<!-- ══════════ RECOMMENDATION ══════════ -->
+<div class="section">
+  <div class="section-title">🎯 Hiring Recommendation</div>
+  <table class="rec-table">
+    <thead>
+      <tr><th>Priority</th><th>Candidate(s)</th><th>Justification</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="tier-label tier-1">🥇 Interview First</span></td>
+        <td><strong>Candidate A</strong></td>
+        <td>Only production Elixir engineer in the pool. Unique value even with the seniority gap — the company cannot easily replace Elixir-native expertise. Start here.</td>
+      </tr>
+      <tr>
+        <td><span class="tier-label tier-2">🥈 Strong Interview</span></td>
+        <td><strong>Candidate B</strong><br>Candidate C</td>
+        <td>Both are strong senior engineers on acknowledged transition paths. Candidate B brings the best architecture and API depth; Candidate C brings the best DevOps and DB depth. Either could ramp to Elixir given their foundations.</td>
+      </tr>
+      <tr>
+        <td><span class="tier-label tier-3">🥉 If Top 3 Unavailable</span></td>
+        <td><strong>Candidate D</strong><br>Candidate F</td>
+        <td>Candidate D: best DevOps profile, weaker on architecture. Candidate F: Ruby background eases the Elixir transition conceptually. Both are borderline on seniority or stack fit.</td>
+      </tr>
+      <tr>
+        <td><span class="tier-label tier-x">⛔ Do Not Proceed</span></td>
+        <td>Candidate E · G · H · I</td>
+        <td>Candidate E is underpowered for the seniority bar. Candidate G is a frontend profile. Candidate H's Java pathway is not acknowledged by the JD. Candidate I is an entirely wrong domain (.NET/C#).</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</div>
+</body>
+</html>
