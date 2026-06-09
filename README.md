@@ -2,18 +2,33 @@
 
 This repository contains Claude plugins for Glific workflows.
 
-## Available plugin
+## Available plugins
 
-- `iteration-planning`: Issue creation and issue update workflows for `glific/glific`.
+### `iteration-planning`
+Issue creation and update workflows for `glific/glific`.
 
-## Included skills
-
+**Skills:**
 - `create-issue`: Convert rough issue notes into a structured GitHub issue draft and create the issue after confirmation.
 - `update-issue`: Read an existing GitHub issue, rewrite it into a structured format, and update it after confirmation.
 
+---
+
+### `feature-doc`
+Turn a solution doc into a feature implementation doc, then a ticket plan, then GitHub issues. Grounds the doc in your actual codebase; creates one epic + sub-tickets via the `gh` CLI after your confirmation.
+
+---
+
+### `hiring`
+Score and rank job candidates against a job description, producing a detailed self-contained HTML report a hiring manager can open in a browser. Works for Engineering, Support, Product, Design, Engineering Management, Solutions/Sales, Marketing, and HR/Operations roles.
+
+**Skills:**
+- `candidate-reviewer`: Evaluate resumes against a JD, score across weighted dimensions, and generate a full HTML scoring report with matrix, bar chart, pros/cons cards, and shortlist recommendations.
+
+---
+
 ## Install
 
-Install this plugin through Claude Code marketplace commands (GitHub repo source):
+Install a plugin through Claude Code marketplace commands (GitHub repo source):
 
 1. Add this repository as a marketplace:
 
@@ -21,7 +36,7 @@ Install this plugin through Claude Code marketplace commands (GitHub repo source
    /plugin marketplace add glific/claude-code-plugins
    ```
 
-2. Open the plugin manager and install `iteration-planning-plugins` from the **Discover** tab:
+2. Open the plugin manager and install from the **Discover** tab:
 
    ```bash
    /plugin
@@ -31,6 +46,7 @@ Install this plugin through Claude Code marketplace commands (GitHub repo source
 
    ```bash
    /plugin install iteration-planning@glific-claude-plugins
+   /plugin install feature-doc@glific-claude-plugins
    ```
 
 3. Reload plugins in the current session:
@@ -41,7 +57,7 @@ Install this plugin through Claude Code marketplace commands (GitHub repo source
 
 ## Upgrade marketplace and plugin
 
-When plugin metadata changes, refresh marketplace data and reinstall/update the plugin:
+When plugin metadata changes, refresh marketplace data and reinstall/update:
 
 1. Refresh marketplace metadata:
 
@@ -85,20 +101,23 @@ Use a local checkout as a marketplace source while validating plugin changes:
 
 ## Use
 
-Run a skill from the installed plugin:
+Run a skill from an installed plugin:
 
 ```bash
 /iteration-planning-plugins:create-issue
+/iteration-planning-plugins:update-issue
 ```
 
-or
+```bash
+/feature-doc-plugins:feature-doc
+```
 
 ```bash
-/iteration-planning-plugins:update-issue
+/hiring:candidate-reviewer
 ```
 
 ## Notes
 
-- These skills use GitHub CLI (`gh`) to create or update issues, so make sure `gh` is installed and authenticated (`gh auth login`).
-- Ensure you also run `gh auth refresh -s read:project` to grant access to project management commands.
-- The skills are designed for the `glific/glific` repository by default.
+- The `iteration-planning` skills use GitHub CLI (`gh`) — make sure `gh` is installed and authenticated (`gh auth login`).
+- Run `gh auth refresh -s read:project` to grant access to project management commands.
+- The `iteration-planning` skills are designed for the `glific/glific` repository by default.
