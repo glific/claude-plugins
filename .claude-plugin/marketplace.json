@@ -8,6 +8,11 @@
       "name": "iteration-planning-plugins",
       "source": "./plugins/iteration-planning",
       "description": "Iteration planning skills for Glific"
+    },
+    {
+      "name": "hiring-plugins",
+      "source": "./plugins/hiring",
+      "description": "Hiring assistant for Glific"
     }
   ]
 }
