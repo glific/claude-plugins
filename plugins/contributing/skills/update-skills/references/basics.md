@@ -2,7 +2,7 @@
 
 ## What this repo is
 
-The **glific-team** repository is a library of **plugins**. Each plugin belongs to a team (marketing, product-development, etc.). When someone installs a plugin in Claude Code, Claude gains new abilities tailored to that team.
+The **claude-plugins** repository is a library of **plugins**. Each plugin belongs to a team (marketing, product-development, etc.). When someone installs a plugin in Claude Code, Claude gains new abilities tailored to that team.
 
 You are editing **content** in that library — not building an app.
 

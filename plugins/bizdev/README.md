@@ -5,7 +5,7 @@ Business development skills and agents for the Glific team. This plugin is a sca
 ## Install
 
 ```bash
-/plugin marketplace add glific/glific-team
+/plugin marketplace add glific/claude-plugins
 /plugin install bizdev@glific-team
 /reload-plugins
 ```

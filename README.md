@@ -34,7 +34,7 @@ Install a plugin through Claude Code marketplace commands (GitHub repo source):
 1. Add this repository as a marketplace:
 
    ```bash
-   /plugin marketplace add glific/glific-team
+   /plugin marketplace add glific/claude-plugins
    ```
 
 2. Install one or more plugins:
@@ -65,7 +65,7 @@ When plugin metadata changes, refresh marketplace data and reinstall:
 ## Add local marketplace for testing
 
 ```bash
-/plugin marketplace add /absolute/path/to/claude-code-plugins
+/plugin marketplace add /absolute/path/to/claude-plugins
 /plugin install software-development@glific-team
 /reload-plugins
 ```

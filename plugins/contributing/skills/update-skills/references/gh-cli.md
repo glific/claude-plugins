@@ -12,18 +12,18 @@ gh auth status
 gh auth login
 
 # Clone the repo (once)
-gh repo clone glific/glific-team
-cd glific-team
+gh repo clone glific/claude-plugins
+cd claude-plugins
 ```
 
-Replace `glific/glific-team` with your org/repo if different.
+Replace `glific/claude-plugins` with your org/repo if different.
 
 ## Every change
 
 ### 1. Start from latest main
 
 ```bash
-cd glific-team
+cd claude-plugins
 git checkout main
 git pull
 ```

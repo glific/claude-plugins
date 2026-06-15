@@ -5,7 +5,7 @@ Customer support skills and agents for the Glific team. This plugin is a scaffol
 ## Install
 
 ```bash
-/plugin marketplace add glific/glific-team
+/plugin marketplace add glific/claude-plugins
 /plugin install customer-support@glific-team
 /reload-plugins
 ```

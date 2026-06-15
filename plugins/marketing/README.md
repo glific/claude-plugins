@@ -5,7 +5,7 @@ Marketing skills and agents for the Glific team.
 ## Install
 
 ```bash
-/plugin marketplace add glific/glific-team
+/plugin marketplace add glific/claude-plugins
 /plugin install marketing@glific-team
 /reload-plugins
 ```

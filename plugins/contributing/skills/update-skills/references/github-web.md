@@ -11,7 +11,7 @@ Use this path if the user is new to git. No terminal required.
 
 ### 1. Open the repository
 
-Go to the team plugins repo in a browser. If unsure of the URL, ask your coach or check the root `README.md` for the marketplace name (`glific/glific-team` or your org's equivalent).
+Go to the team plugins repo in a browser. If unsure of the URL, ask your coach or check the root `README.md` for the marketplace name (`glific/claude-plugins` or your org's equivalent).
 
 ### 2. Navigate to the file
 

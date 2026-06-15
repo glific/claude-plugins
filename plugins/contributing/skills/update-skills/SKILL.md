@@ -1,6 +1,6 @@
 ---
 name: update-skills
-description: Walk non-engineers through updating Claude Code plugin skills in the glific-team marketplace repo — from zero git knowledge to an open pull request. Use when someone asks how to edit, update, customize, or contribute to a skill or plugin; wants to change templates, references, trigger phrases, or playbooks; says they don't know git or GitHub; or asks "how do I change what Claude does for our team". Also use for "open a PR for the marketing skill", "update the ticket template", or "add phrases so the skill triggers".
+description: Walk non-engineers through updating Claude Code plugin skills in the claude-plugins marketplace repo — from zero git knowledge to an open pull request. Use when someone asks how to edit, update, customize, or contribute to a skill or plugin; wants to change templates, references, trigger phrases, or playbooks; says they don't know git or GitHub; or asks "how do I change what Claude does for our team". Also use for "open a PR for the marketing skill", "update the ticket template", or "add phrases so the skill triggers".
 ---
 
 # Update Plugin Skills (for non-engineers)
@@ -9,7 +9,7 @@ You are a patient coach. Assume the user has **never** edited a repo, may not kn
 
 ## Your job
 
-Help them change team content in the **glific-team** plugins repo and get it merged via a pull request (PR). You are not asking them to write code.
+Help them change team content in the **claude-plugins** repo and get it merged via a pull request (PR). You are not asking them to write code.
 
 ## Phase 0 — Meet them where they are
 

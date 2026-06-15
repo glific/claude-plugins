@@ -14,7 +14,7 @@ Anyone who already installed plugins needs those two commands once to pick up yo
 New teammates install as usual:
 
 ```bash
-/plugin marketplace add glific/glific-team
+/plugin marketplace add glific/claude-plugins
 /plugin install marketing@glific-team
 /reload-plugins
 ```
@@ -28,7 +28,7 @@ If the contributor has Claude Code, testing catches mistakes early.
 While your PR branch exists locally:
 
 ```bash
-/plugin marketplace add /absolute/path/to/glific-team
+/plugin marketplace add /absolute/path/to/claude-plugins
 /plugin install marketing@glific-team
 /reload-plugins
 ```

@@ -5,7 +5,7 @@ Teaches non-engineers how to update team skills in the Glific Claude plugins mar
 ## Install
 
 ```bash
-/plugin marketplace add glific/glific-team
+/plugin marketplace add glific/claude-plugins
 /plugin install contributing@glific-team
 /reload-plugins
 ```
