@@ -1,8 +1,0 @@
-{
-  "name": "feature-doc",
-  "version": "0.1.0",
-  "description": "Turn a solution doc into a feature implementation doc, then a ticket plan, then GitHub issues. Grounds the doc in your actual codebase; creates one epic + sub-tickets via the gh CLI after your confirmation.",
-  "author": {
-    "name": "Your Team"
-  }
-}

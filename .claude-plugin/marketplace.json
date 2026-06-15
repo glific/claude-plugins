@@ -1,18 +1,43 @@
 {
   "name": "glific-claude-plugins",
   "owner": {
-    "name": "Vignesh Rajasekaran"
+    "name": "Glific Team"
   },
   "plugins": [
     {
-      "name": "iteration-planning-plugins",
-      "source": "./plugins/iteration-planning",
-      "description": "Iteration planning skills for Glific"
+      "name": "bizdev",
+      "source": "./plugins/bizdev",
+      "description": "Business development skills and agents for the Glific team"
     },
     {
-      "name": "hiring-plugins",
+      "name": "contributing",
+      "source": "./plugins/contributing",
+      "description": "How to update and contribute skills to the Glific plugins marketplace"
+    },
+    {
+      "name": "customer-support",
+      "source": "./plugins/customer-support",
+      "description": "Customer support skills and agents for the Glific team"
+    },
+    {
+      "name": "hiring",
       "source": "./plugins/hiring",
       "description": "Hiring assistant for Glific"
+    },
+    {
+      "name": "marketing",
+      "source": "./plugins/marketing",
+      "description": "Marketing skills and agents for the Glific team"
+    },
+    {
+      "name": "product-development",
+      "source": "./plugins/product-development",
+      "description": "Product development skills for Glific — tech design docs, implementation specs, and ticket breakdowns"
+    },
+    {
+      "name": "software-development",
+      "source": "./plugins/software-development",
+      "description": "Software development skills for Glific — issue management, engineering workflows, and tooling"
     }
   ]
 }
