@@ -1,10 +1,13 @@
 # product-development — Claude Code plugin
 
-Turn a solution doc into a tech design / implementation document, then a ticket plan, then GitHub issues. All grounded in your actual codebase.
+Two workflows for product and engineering teams:
+
+1. **Feature specs** — Turn a rough idea, prototype URL, or PRD into a structured PM spec with user stories and acceptance criteria, then scope versioned iterations.
+2. **Tech design → tickets** — Turn a solution doc into a codebase-grounded implementation doc, then a ticket plan, then GitHub issues.
 
 ```
-Solution doc  →  Tech design doc  →  Ticket plan  →  GitHub issues
-   (yours)      (Claude drafts it)    (epic + sub-tickets)    (gh CLI)
+Idea / PRD / prototype  →  Feature spec  →  v1 scope  →  Engineering plan
+Solution doc            →  Tech design   →  Tickets   →  GitHub issues (gh CLI)
 ```
 
 ## What it does
@@ -48,6 +51,29 @@ Push this plugin folder to a git repo, then teammates run:
 
 ## Use
 
+### Feature specs (`write-spec`)
+
+**From an idea:**
+```
+/product-development:write-spec bulk broadcast scheduling
+```
+
+**From a prototype URL or PRD:**
+```
+/product-development:write-spec https://your-prototype.com/feature PRD: https://docs.google.com/...
+```
+
+**Scope a v1 iteration from an existing spec:**
+```
+/product-development:write-spec features/hsm_revamp
+```
+
+The skill writes `features/{feature-name}/spec.md` for a full vision, or `features/{feature-name}/v{N}/spec.md` for a scoped iteration. It fetches any URLs you provide, reads design docs, and writes a spec with problem statement, user stories with acceptance criteria, MVP scope, technical implications, and open questions.
+
+---
+
+### Tech design → tickets (`create`, `tickets`)
+
 **Full pipeline from a solution doc:**
 
 ```
@@ -77,9 +103,12 @@ product-development/
 ├── .claude-plugin/
 │   └── plugin.json
 ├── commands/
+│   ├── write-spec.md       # /product-development:write-spec
 │   ├── create.md           # /product-development:create
 │   └── tickets.md          # /product-development:tickets
 └── skills/
+    ├── write-spec/
+    │   └── SKILL.md
     └── author-tech-design/
         ├── SKILL.md
         ├── templates/
