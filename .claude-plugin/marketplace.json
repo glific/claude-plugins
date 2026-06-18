@@ -33,11 +33,6 @@
       "name": "product-development",
       "source": "./plugins/product-development",
       "description": "Product development skills for Glific — tech design docs, implementation specs, and ticket breakdowns"
-    },
-    {
-      "name": "software-development",
-      "source": "./plugins/software-development",
-      "description": "Software development skills for Glific — issue management, engineering workflows, and tooling"
     }
   ]
 }
