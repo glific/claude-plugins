@@ -38,11 +38,6 @@
       "name": "reports-and-presentations",
       "source": "./plugins/reports-and-presentations",
       "description": "Report generation skills for Glific - monthly and quarterly review decks"
-    },
-    {
-      "name": "software-development",
-      "source": "./plugins/software-development",
-      "description": "Software development skills for Glific - issue management, engineering workflows, and tooling"
     }
   ]
 }
