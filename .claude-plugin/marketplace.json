@@ -32,17 +32,17 @@
     {
       "name": "product-development",
       "source": "./plugins/product-development",
-      "description": "Product development skills for Glific \u2014 tech design docs, implementation specs, and ticket breakdowns"
+      "description": "Product development skills for Glific - tech design docs, implementation specs, and ticket breakdowns"
     },
     {
       "name": "reports-and-presentations",
       "source": "./plugins/reports-and-presentations",
-      "description": "Report generation skills for Glific \u2014 monthly and quarterly review decks"
+      "description": "Report generation skills for Glific - monthly and quarterly review decks"
     },
     {
       "name": "software-development",
       "source": "./plugins/software-development",
-      "description": "Software development skills for Glific \u2014 issue management, engineering workflows, and tooling"
+      "description": "Software development skills for Glific - issue management, engineering workflows, and tooling"
     }
   ]
 }
