@@ -41,6 +41,8 @@ Examples: `prompt-generator`, `assistants`, `flows`, `contacts-import`.
 5. A **results sheet** — `results.csv` + `results.md` written to the run folder, one row per
    scenario: action, expected, observed, status, latency, screenshot, issue/root-cause, suggested
    fix, fixed?.
+6. An updated **cache manifest** (`.claude/test-feature/manifest.json`) so a later run on the same
+   (unchanged) code reuses these results instead of re-driving the browser — see **Phase 0**.
 
 ## Hard rules
 
@@ -62,16 +64,47 @@ Examples: `prompt-generator`, `assistants`, `flows`, `contacts-import`.
 ## Progress checklist
 
 ```
+- [ ] Phase 0 — Check the result cache (reuse unchanged scenarios — save tokens)
 - [ ] Phase 1 — Verify stack is up
 - [ ] Phase 2 — Open app + ensure logged in
 - [ ] Phase 3 — Build the scenario matrix (happy + failure + edge)
 - [ ] Phase 4 — Execute each scenario: drive, time, screenshot, record
 - [ ] Phase 5 — Generate FE tests (Vitest + Cypress) for each scenario
-- [ ] Phase 6 — Emit the results sheet (CSV + Markdown + screenshots)
+- [ ] Phase 6 — Emit the results sheet + update the cache manifest
 - [ ] Phase 7 — Report (per-scenario PASS/FAIL/BLOCKED + issues + fixes)
 ```
 
 ---
+
+## Phase 0 — Check the result cache (before driving anything)
+
+Driving the browser is the expensive part. If the feature's code hasn't changed since the last run,
+**reuse the stored results instead of re-testing everything.** The cache lives in
+`.claude/test-feature/` (`watch/<feature>.txt`, `fingerprint.sh`, `manifest.json`).
+
+1. **Compute the current fingerprint** of the feature's source files:
+   ```bash
+   bash .claude/test-feature/fingerprint.sh <feature>
+   ```
+   (No `watch/<feature>.txt` yet → this is a first run for the feature: skip to Phase 1, and create
+   the watch-list + a manifest entry in Phase 6.)
+2. **Compare** it to `features.<feature>.fingerprint` in `.claude/test-feature/manifest.json`:
+   - **Match (code unchanged)** → do **NOT** drive the browser. Show the cached scenario table +
+     the sheet path from `last_run`, then ask what they want:
+     - **Reuse as-is** — done (this is the token-saving path).
+     - **Run specific scenario(s) / a new edge case they name** — run only those (Phases 1–6 for that
+       subset), then merge the results into the manifest.
+     - **Force a full re-run** — run everything.
+   - **Differ (code changed)** → say so and show which watched files changed
+     (`git -C <repo> diff --name-only` / compare hashes). Re-run — full, or just the affected/named
+     scenarios — then update the manifest.
+   - **No manifest entry** → first run; do the full run and create the entry in Phase 6.
+3. **If the user named scenarios/edge cases up front**, honor that over the cache: run just those,
+   regardless of fingerprint, and merge into the manifest.
+
+> The fingerprint is a content hash of the files in `watch/<feature>.txt` (FE component + GraphQL +
+> mocks, BE engine + resolver + callback). It changes the moment any of them is edited — committed or
+> not — so a stale cache can't masquerade as fresh. See [reference.md](reference.md) § Result cache.
 
 ## Phase 1 — Verify the stack is up
 
@@ -146,7 +179,7 @@ For each scenario, produce the matching automated test in `glific-frontend` (you
 
 Record, per scenario, which test(s) now cover it and whether they pass.
 
-## Phase 6 — Emit the results sheet
+## Phase 6 — Emit the results sheet + update the cache manifest
 
 Write to a run folder `test-runs/<feature>-<YYYYMMDD-HHMM>/` (stamp from `date`):
 
@@ -157,6 +190,17 @@ Write to a run folder `test-runs/<feature>-<YYYYMMDD-HHMM>/` (stamp from `date`)
 - A short header: feature, stack/commit, login user role, totals (pass/fail/blocked), date.
 
 Print the Markdown table back in your reply so the user sees the sheet inline.
+
+**Then persist the cache** so the next run can reuse this (see [reference.md](reference.md) § Result
+cache):
+
+- Ensure `.claude/test-feature/watch/<feature>.txt` exists (create it if this was a first run — list
+  the FE + BE files that define the feature's behavior).
+- Update `.claude/test-feature/manifest.json` `features.<feature>`: set `fingerprint` to the current
+  `fingerprint.sh` output, `last_run`, `frontend_commit`/`backend_commit`, `sheet` (the new run
+  folder), and the `scenarios` list — **add or replace** the rows you ran this time, keeping the rest.
+  For a partial (named-scenario) run, only touch those rows and leave the fingerprint as-is **unless**
+  the code changed.
 
 ## Phase 7 — Report
 

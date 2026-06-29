@@ -92,6 +92,41 @@ For genuinely long async work (LLM generation), the budget applies to **feedback
 must be immediate) and to **each poll cadence**, not to the model's total think time — but still
 record the end-to-end duration and whether the wait was communicated to the user.
 
+## Result cache (skip re-testing unchanged features)
+
+Driving the browser burns the most tokens, so a feature whose **code hasn't changed** since the last
+run shouldn't be re-tested from scratch. The cache lives in `.claude/test-feature/`:
+
+```
+.claude/test-feature/
+├── fingerprint.sh            # hashes a feature's watched files -> a content fingerprint
+├── watch/<feature>.txt       # the files that define the feature (one "<repo>:<path>" per line)
+└── manifest.json             # per-feature: fingerprint + last_run + sheet + scenarios[] + issues[]
+```
+
+**Watch-list** (`watch/<feature>.txt`) — one entry per line, `fe:` = `../glific-frontend`,
+`be:` = this repo. List the FE component(s) + GraphQL + mocks and the BE engine/resolver/callback —
+i.e. everything whose change could alter behavior. Comments start with `#`.
+
+**Fingerprint** — `bash .claude/test-feature/fingerprint.sh <feature>` prints
+`<sha256>  files=<n>  missing=<m>`. The sha is a hash of each watched file's current working-tree
+content (via `git hash-object`, so **uncommitted** edits count too). Same code → same sha.
+
+**Decision** (Phase 0): compare the live fingerprint to `manifest.json` →
+
+| Manifest vs live | Meaning | Action |
+|------------------|---------|--------|
+| fingerprints **equal** | feature code unchanged | **reuse** cached scenarios; don't drive the browser. Offer: reuse / run a named scenario / force full re-run |
+| fingerprints **differ** | feature code changed | re-run (full or affected); refresh the entry |
+| no entry / no watch-list | first run | full run; create watch-list + entry |
+| user **names** scenarios | explicit intent | run just those regardless of cache; merge results |
+
+**Manifest entry shape** (`features.<feature>`): `fingerprint`, `fingerprint_files`, `watch`,
+`last_run`, `frontend_commit`, `backend_commit`, `sheet`, `summary`, `scenarios[]`
+(`{id, layer, type, name, status, latency?, screenshot?}`), `not_covered_live[]`, `issues[]`.
+On a run, set the fingerprint + last_run + sheet and **add/replace** the scenario rows you ran,
+keeping the rest. A reused run changes nothing; a partial run touches only the named rows.
+
 ## Results sheet
 
 Write `results.csv` + `results.md` (same columns) into `test-runs/<feature>-<YYYYMMDD-HHMM>/`:

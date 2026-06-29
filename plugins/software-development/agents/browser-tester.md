@@ -75,6 +75,26 @@ Core loop for every step:
 Notes: `browser_fill_form` fills many fields in one call; prefer accessible names/roles over brittle
 CSS selectors; the user's manual login happens in the same Chromium window you drive.
 
+## Phase 0 — Check the result cache (before driving anything)
+
+Driving the browser is the token-expensive part, so don't re-test a feature whose code hasn't
+changed. Compute the feature fingerprint and compare to the manifest:
+
+```bash
+bash .claude/test-feature/fingerprint.sh <feature>
+```
+
+- **Matches** `features.<feature>.fingerprint` in `.claude/test-feature/manifest.json` → the code is
+  unchanged. **Do not drive the browser.** Return the cached scenario table + sheet, and offer:
+  reuse as-is / run a specific scenario the user names / force a full re-run.
+- **Differs** → code changed; re-run (full or affected) and refresh the manifest.
+- **No entry / no watch-list** → first run; do the full run and create the watch-list + entry.
+- **User names scenarios/edge cases** → run just those regardless of the cache; merge into the
+  manifest.
+
+See the skill's `reference.md` § Result cache for the watch-list + manifest schema. Persist the
+manifest after any live run (Phase 4).
+
 ## Phase 1 — Build the scenario matrix
 
 Before driving, enumerate the scenarios. Cover at least:
@@ -134,6 +154,11 @@ plus a `screenshots/` folder (copy the per-scenario PNGs from `.playwright-mcp/`
 `Status` = ✅ pass / ❌ fail / ⚠️ pass-with-issue / ⛔ blocked. `Fixed?` = `test ✅` (test code applied)
 / `proposed` (app code, awaiting OK) / `—`. Header: feature, frontend/backend commit, login role,
 date, totals. Print the Markdown table inline in your final report.
+
+Then **persist the cache** (Phase 0): ensure `.claude/test-feature/watch/<feature>.txt` exists and
+update `.claude/test-feature/manifest.json` `features.<feature>` — new `fingerprint`, `last_run`,
+commits, `sheet`, and add/replace the scenario rows you ran (keep the rest) — so the next run can
+reuse unchanged results.
 
 ## Fix policy
 
