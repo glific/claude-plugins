@@ -33,6 +33,11 @@
       "name": "product-development",
       "source": "./plugins/product-development",
       "description": "Product development skills for Glific — tech design docs, implementation specs, and ticket breakdowns"
+    },
+    {
+      "name": "software-development",
+      "source": "./plugins/software-development",
+      "description": "Engineering workflows for Glific — live end-to-end browser testing of frontend features (test-feature skill + browser-tester agent)"
     }
   ]
 }
