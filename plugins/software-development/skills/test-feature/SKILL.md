@@ -79,8 +79,13 @@ Examples: `prompt-generator`, `assistants`, `flows`, `contacts-import`.
 ## Phase 0 — Check the result cache (before driving anything)
 
 Driving the browser is the expensive part. If the feature's code hasn't changed since the last run,
-**reuse the stored results instead of re-testing everything.** The cache lives in
-`.claude/test-feature/` (`watch/<feature>.txt`, `fingerprint.sh`, `manifest.json`).
+**reuse the stored results instead of re-testing everything.** The live cache lives in the **project
+repo** at `.claude/test-feature/` (`watch/<feature>.txt`, `fingerprint.sh`, `manifest.json`).
+
+> **First time in this project?** If `.claude/test-feature/` doesn't exist, bootstrap it from this
+> plugin's seed — see [cache/README.md](cache/README.md) (copies `fingerprint.sh`, `watch/`, and
+> `manifest.seed.json` → `.claude/test-feature/`). The plugin ships the engine + a seed; the project
+> holds the live, run-updated manifest (a plugin is read-only, so runs persist in the project copy).
 
 1. **Compute the current fingerprint** of the feature's source files:
    ```bash
