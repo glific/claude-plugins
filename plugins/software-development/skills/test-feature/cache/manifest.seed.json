@@ -1,5 +1,5 @@
 {
-  "_doc": "Test-result cache for the test-feature skill. Each feature stores the fingerprint of its source files (see watch/<feature>.txt + fingerprint.sh) at the time of the last run, plus the scenarios that were tested and their outcomes. Before re-running, the skill recomputes the fingerprint: if it equals `fingerprint` below, the code is unchanged and these cached results can be reused instead of re-driving the browser. If it differs, the feature changed — re-run. A user naming specific scenarios overrides the cache for just those.",
+  "_doc": "Test-result cache for the test-feature skill. Each feature stores the fingerprint of its source files (see watch/<feature>.txt + fingerprint.sh) at the time of the last run, plus the scenarios that were tested and their outcomes. Before re-running, the skill recomputes the fingerprint: if it equals `fingerprint` below, the code is unchanged and these cached results can be reused instead of re-driving the browser. If it differs, the feature changed \u2014 re-run. A user naming specific scenarios overrides the cache for just those.",
   "features": {
     "prompt-generator": {
       "fingerprint": "9ce887f8faab46cfbc37da1d572498c1e94695c0b1d26d2b4fa3f6b1ac8e392d",
@@ -10,39 +10,287 @@
       "backend_commit": "42a66b2c9",
       "sheet": "test-runs/prompt-generator-20260627-2326/results.md",
       "summary": {
-        "live": { "pass": 6, "pass_with_issue": 1, "fail": 0 },
-        "vitest": { "pass": 10, "total": 10 },
+        "live": {
+          "pass": 6,
+          "pass_with_issue": 1,
+          "fail": 0
+        },
+        "vitest": {
+          "pass": 10,
+          "total": 10
+        },
         "issues": 3
       },
       "scenarios": [
-        { "id": "L0", "layer": "live", "type": "happy", "name": "Open wizard (flag ON)", "status": "pass", "latency": "instant", "screenshot": "screenshots/pg-wizard-opened.png" },
-        { "id": "L3", "layer": "live", "type": "failure", "name": "Generate at 0/9 blocked by validation", "status": "pass", "latency": "instant", "screenshot": "screenshots/pg-L3-validation-empty.png" },
-        { "id": "L1", "layer": "live", "type": "happy", "name": "Fill 9 -> Generate -> preview weaves in answers incl exact fallback", "status": "pass", "latency": "~20s gen / spinner <=1s", "screenshot": "screenshots/pg-L1-happy-preview.png" },
-        { "id": "L6", "layer": "live", "type": "latency", "name": "Spinner appears on Generate", "status": "pass", "latency": "<=1s" },
-        { "id": "L7", "layer": "live", "type": "latency", "name": "End-to-end generation time", "status": "pass_with_issue", "latency": "~20s", "issue": "gen ~20s == 20s client timeout" },
-        { "id": "L2", "layer": "live", "type": "happy", "name": "Use this Prompt -> Instructions populated", "status": "pass", "latency": "instant", "screenshot": "screenshots/pg-L2-instructions-populated.png" },
-        { "id": "L9", "layer": "live", "type": "edge", "name": "Re-generate replaces preview", "status": "pass", "latency": "~20s / spinner <=1s", "screenshot": "screenshots/pg-L9-regenerate-newpreview.png" },
-        { "id": "U1", "layer": "vitest", "type": "setup", "name": "Pre-fill wizard from parent", "status": "pass" },
-        { "id": "U2", "layer": "vitest", "type": "happy", "name": "Renders header + beta + all 9 questions", "status": "pass" },
-        { "id": "U3", "layer": "vitest", "type": "failure", "name": "Generate validates gaps before generating", "status": "pass" },
-        { "id": "U4", "layer": "vitest", "type": "edge", "name": "Clear resets all answers", "status": "pass" },
-        { "id": "U5", "layer": "vitest", "type": "happy", "name": "Generate -> poll -> editable preview", "status": "pass" },
-        { "id": "U6", "layer": "vitest", "type": "happy", "name": "Edit preview -> Use this Prompt -> onApply(edited)", "status": "pass" },
-        { "id": "U7", "layer": "vitest", "type": "failure", "name": "Mutation error -> error + Retry", "status": "pass" },
-        { "id": "U8", "layer": "vitest", "type": "failure", "name": "Mutation returns failed status -> error", "status": "pass" },
-        { "id": "U9", "layer": "vitest", "type": "failure", "name": "Ready with no prompt text -> failure", "status": "pass" },
-        { "id": "U10", "layer": "vitest", "type": "failure", "name": "Poll resolves to failed status -> error", "status": "pass" }
+        {
+          "id": "L0",
+          "layer": "live",
+          "type": "happy",
+          "name": "Open wizard (flag ON)",
+          "status": "pass",
+          "latency": "instant",
+          "screenshot": "screenshots/pg-wizard-opened.png"
+        },
+        {
+          "id": "L3",
+          "layer": "live",
+          "type": "failure",
+          "name": "Generate at 0/9 blocked by validation",
+          "status": "pass",
+          "latency": "instant",
+          "screenshot": "screenshots/pg-L3-validation-empty.png"
+        },
+        {
+          "id": "L1",
+          "layer": "live",
+          "type": "happy",
+          "name": "Fill 9 -> Generate -> preview weaves in answers incl exact fallback",
+          "status": "pass",
+          "latency": "~20s gen / spinner <=1s",
+          "screenshot": "screenshots/pg-L1-happy-preview.png"
+        },
+        {
+          "id": "L6",
+          "layer": "live",
+          "type": "latency",
+          "name": "Spinner appears on Generate",
+          "status": "pass",
+          "latency": "<=1s"
+        },
+        {
+          "id": "L7",
+          "layer": "live",
+          "type": "latency",
+          "name": "End-to-end generation time",
+          "status": "pass_with_issue",
+          "latency": "~20s",
+          "issue": "gen ~20s == 20s client timeout"
+        },
+        {
+          "id": "L2",
+          "layer": "live",
+          "type": "happy",
+          "name": "Use this Prompt -> Instructions populated",
+          "status": "pass",
+          "latency": "instant",
+          "screenshot": "screenshots/pg-L2-instructions-populated.png"
+        },
+        {
+          "id": "L9",
+          "layer": "live",
+          "type": "edge",
+          "name": "Re-generate replaces preview",
+          "status": "pass",
+          "latency": "~20s / spinner <=1s",
+          "screenshot": "screenshots/pg-L9-regenerate-newpreview.png"
+        },
+        {
+          "id": "U1",
+          "layer": "vitest",
+          "type": "setup",
+          "name": "Pre-fill wizard from parent",
+          "status": "pass"
+        },
+        {
+          "id": "U2",
+          "layer": "vitest",
+          "type": "happy",
+          "name": "Renders header + beta + all 9 questions",
+          "status": "pass"
+        },
+        {
+          "id": "U3",
+          "layer": "vitest",
+          "type": "failure",
+          "name": "Generate validates gaps before generating",
+          "status": "pass"
+        },
+        {
+          "id": "U4",
+          "layer": "vitest",
+          "type": "edge",
+          "name": "Clear resets all answers",
+          "status": "pass"
+        },
+        {
+          "id": "U5",
+          "layer": "vitest",
+          "type": "happy",
+          "name": "Generate -> poll -> editable preview",
+          "status": "pass"
+        },
+        {
+          "id": "U6",
+          "layer": "vitest",
+          "type": "happy",
+          "name": "Edit preview -> Use this Prompt -> onApply(edited)",
+          "status": "pass"
+        },
+        {
+          "id": "U7",
+          "layer": "vitest",
+          "type": "failure",
+          "name": "Mutation error -> error + Retry",
+          "status": "pass"
+        },
+        {
+          "id": "U8",
+          "layer": "vitest",
+          "type": "failure",
+          "name": "Mutation returns failed status -> error",
+          "status": "pass"
+        },
+        {
+          "id": "U9",
+          "layer": "vitest",
+          "type": "failure",
+          "name": "Ready with no prompt text -> failure",
+          "status": "pass"
+        },
+        {
+          "id": "U10",
+          "layer": "vitest",
+          "type": "failure",
+          "name": "Poll resolves to failed status -> error",
+          "status": "pass"
+        }
       ],
       "not_covered_live": [
-        { "id": "L4", "type": "failure", "name": "Mutation/Kaapi error -> Retry", "note": "needs network stubbing; covered at vitest (U7)" },
-        { "id": "L5", "type": "failure", "name": "20s timeout", "note": "not injectable via MCP; covered at vitest" },
-        { "id": "L8", "type": "edge", "name": "Very long / special-char answers", "note": "not yet run" }
+        {
+          "id": "L4",
+          "type": "failure",
+          "name": "Mutation/Kaapi error -> Retry",
+          "note": "needs network stubbing; covered at vitest (U7)"
+        },
+        {
+          "id": "L5",
+          "type": "failure",
+          "name": "20s timeout",
+          "note": "not injectable via MCP; covered at vitest"
+        },
+        {
+          "id": "L8",
+          "type": "edge",
+          "name": "Very long / special-char answers",
+          "note": "not yet run"
+        }
       ],
       "issues": [
-        { "sev": "medium", "area": "latency/reliability", "finding": "Generation ~20s == modal 20s timeout -> intermittent timeouts", "fix": "raise client timeout to 45-60s + 'still working' message", "fixed": "proposed (app code)" },
-        { "sev": "low", "area": "layout", "finding": "Use this Prompt button below the fold at ~720px height (footer not sticky)", "fix": "sticky modal footer / cap preview height", "fixed": "proposed (app code)" },
-        { "sev": "low", "area": "test hygiene", "finding": "Vitest Apollo addTypename/canonizeResults deprecation + act() warnings", "fix": "drop deprecated flags; wrap poll ticks in act()", "fixed": "proposed (test code)" }
+        {
+          "sev": "medium",
+          "area": "latency/reliability",
+          "finding": "Generation ~20s == modal 20s timeout -> intermittent timeouts",
+          "fix": "raise client timeout to 45-60s + 'still working' message",
+          "fixed": "proposed (app code)"
+        },
+        {
+          "sev": "low",
+          "area": "layout",
+          "finding": "Use this Prompt button below the fold at ~720px height (footer not sticky)",
+          "fix": "sticky modal footer / cap preview height",
+          "fixed": "proposed (app code)"
+        },
+        {
+          "sev": "low",
+          "area": "test hygiene",
+          "finding": "Vitest Apollo addTypename/canonizeResults deprecation + act() warnings",
+          "fix": "drop deprecated flags; wrap poll ticks in act()",
+          "fixed": "proposed (test code)"
+        }
       ]
+    },
+    "interactive-templates": {
+      "fingerprint": "a2e03a4e61ead84943eff2fa0cf118dc66eba294e9294faa6b0e37889481f147",
+      "fingerprint_files": 11,
+      "watch": ".claude/test-feature/watch/interactive-templates.txt",
+      "last_run": "2026-06-29T08:45",
+      "frontend_commit": "4b44dc192",
+      "backend_commit": "42a66b2c9",
+      "sheet": "test-runs/interactive-templates-20260629-0845/results.md",
+      "summary": {
+        "live": {
+          "pass": 4,
+          "pass_with_issue": 0,
+          "fail": 0
+        },
+        "vitest": {
+          "pass": 0,
+          "total": 0
+        },
+        "issues": 0
+      },
+      "scenarios": [
+        {
+          "id": "L0",
+          "layer": "live",
+          "type": "happy",
+          "name": "Interactive-message list loads (13 templates, Create button)",
+          "status": "pass",
+          "latency": "ok",
+          "screenshot": "screenshots/im-L0-list.png"
+        },
+        {
+          "id": "L1",
+          "layer": "live",
+          "type": "happy",
+          "name": "Open Create form (/interactive-message/add)",
+          "status": "pass",
+          "latency": "instant",
+          "screenshot": "screenshots/im-L1-create-form.png"
+        },
+        {
+          "id": "L3",
+          "layer": "live",
+          "type": "failure",
+          "name": "Save empty form -> validation (Title/Message/Button required)",
+          "status": "pass",
+          "latency": "instant",
+          "screenshot": "screenshots/im-L3-validation.png"
+        },
+        {
+          "id": "L2",
+          "layer": "live",
+          "type": "happy",
+          "name": "Create Quick Reply (Title+Message+Button) -> Save -> appears in list",
+          "status": "pass",
+          "latency": "fast (not precisely measured)",
+          "screenshot": "screenshots/im-L2-created-in-list.png"
+        }
+      ],
+      "not_covered_live": [
+        {
+          "id": "L4",
+          "type": "happy",
+          "name": "Create a List-type interactive message",
+          "note": "not yet run"
+        },
+        {
+          "id": "L5",
+          "type": "happy",
+          "name": "Create a Location-request type",
+          "note": "not yet run"
+        },
+        {
+          "id": "L6",
+          "type": "edge",
+          "name": "Edit + delete an existing template",
+          "note": "not yet run"
+        },
+        {
+          "id": "L7",
+          "type": "edge",
+          "name": "Translate to Hindi (multi-language)",
+          "note": "not yet run"
+        },
+        {
+          "id": "V",
+          "type": "vitest",
+          "name": "FE unit tests for InteractiveMessage",
+          "note": "not yet generated"
+        }
+      ],
+      "issues": [],
+      "notes": "Representative first run (happy nav + create + validation). Test data left in dev DB: interactive template 'QA Test Quick Reply' (deletable from the list)."
     }
   }
 }
