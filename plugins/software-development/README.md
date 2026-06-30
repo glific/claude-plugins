@@ -35,17 +35,6 @@ The tester may create/modify **test code** (Vitest specs, Cypress specs, mocks, 
 **not** edit application code to make a scenario pass — bugs and latency findings are written into
 the results sheet with a proposed fix and surfaced for your decision.
 
-## Result cache (saves tokens on re-runs)
-
-Driving the browser is the expensive part, so the skill keeps a per-feature **result cache** in the
-project repo at `.claude/test-feature/` (`fingerprint.sh`, `watch/<feature>.txt`, `manifest.json`).
-Before testing, it fingerprints the feature's source files; if they're **unchanged** since the last
-run it reuses the stored scenarios instead of re-driving the browser. A teammate re-running the same
-feature on unchanged code gets the cached sheet back instantly; they can still name a specific
-scenario/edge case to actually run, or force a full re-run. If the feature's code changed, the
-fingerprint differs and it re-tests. (These files live in the **target project repo**, committed so
-the team shares one tested-scenario history — not in this plugin.)
-
 ## Output
 
 A run writes `test-runs/<feature>-<timestamp>/` with `results.md`, `results.csv`, and a
