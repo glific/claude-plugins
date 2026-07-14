@@ -1,5 +1,5 @@
 ---
-name: glific-monitoring
+name: system-monitoring
 description: >
   Run the weekly Glific platform-monitoring routine: pull AppSignal incidents,
   classify them, post a report to Discord, and open draft autofix PRs for the
