@@ -2,9 +2,13 @@
 
 Automated Playwright-based screenshot capture. Recipes define what to capture; `scripts/screenshot.js` (in `glific/docs`) runs them.
 
-## Local setup (one-time)
+**Any reachable Glific instance works** — a local dev stack (`https://glific.test:3000`) or a
+staging/demo deployment (e.g. `https://staging.glific.com`). Don't assume the user has the local
+backend/frontend stack running; a staging URL is a fine default and needs no other local setup.
 
-### 1. Install Playwright
+## One-time setup
+
+### 1. Install Playwright (in `glific/docs`)
 
 ```bash
 cd /path/to/glific/docs
@@ -12,25 +16,32 @@ yarn add --dev playwright js-yaml
 npx playwright install chromium
 ```
 
-### 2. Add credentials to `.env`
+### 2. Get credentials — always ask, up front
 
-Create a `.env` file in the root of `glific/docs` (it is gitignored):
+**Always ask the user for all three values before doing anything else** — don't check for a
+`.env` file first, don't ask one value at a time, don't ask about approach and then circle back
+for credentials. First message, one shot:
 
-```
-GLIFIC_URL=https://glific.test:3000
-GLIFIC_PHONE=+91XXXXXXXXXX
-GLIFIC_PASSWORD=your_password
-```
+- Glific URL (local dev, e.g. `https://glific.test:3000`, or staging/demo, e.g. `https://staging.glific.com`)
+- Phone number for a **test/demo account** — never production
+- Password for that account
 
-Use a **test/demo account** — not a production account. The script will log in and navigate through the UI.
+Pass the values as environment variables to the script invocation; never write the password into
+a script file, a `.env` you commit, or any file that isn't gitignored.
 
-### 3. Local Glific must be running
+Note: the phone field on the login page is a **country-code selector + local-number input** —
+pass the number *without* the country code prefix (e.g. `7905556238`, not `+917905556238`), or
+`fill()` on `input[name="phoneNumber"]` will leave the field looking empty and login will silently
+not submit.
 
-Before running the screenshot script:
-- Start the backend: follow `glific/glific` setup (Elixir/Phoenix on port 4001)
-- Start the frontend: `cd ../glific-frontend && yarn dev` (runs at `https://glific.test:3000`)
+### 3. Local stack (only if using a local dev URL)
 
-The script ignores HTTPS certificate errors from `mkcert`, so the self-signed cert is fine.
+If `GLIFIC_URL` points at `glific.test`, the local backend and frontend must be running:
+- Backend: follow `glific/glific` setup (Elixir/Phoenix on port 4001)
+- Frontend: `cd ../glific-frontend && yarn dev` (runs at `https://glific.test:3000`)
+
+The script ignores HTTPS certificate errors from `mkcert`, so the self-signed cert is fine. Skip
+this section entirely when pointing at a staging/demo URL.
 
 ## Running the script
 
@@ -119,9 +130,10 @@ Login selectors (from `Auth.tsx` / `Login.tsx`):
 
 ### Nuances
 
-- The PhoneInput component renders a flag picker + text input. The script fills the text portion with `input[name="phoneNumber"]`. If the phone field has a different rendered `name`, inspect the DOM and update the selector in `scripts/screenshot.js`.
+- The PhoneInput component renders a flag picker + text input. Fill the text portion via `input[name="phoneNumber"]` with the number **without** the country code — the code is a separate selector next to it, and including it (e.g. `+917905556238`) leaves the field empty and login never fires.
 - After login, some features require seed data (e.g., Flow list needs existing flows). Use a demo account with pre-created data.
 - The frontend uses Apollo Client with WebSocket subscriptions — some pages load data asynchronously. Use `wait` steps (not `sleep`) to wait for data to appear.
+- **List/table pages render skeleton loaders first** (gray placeholder rows) before real data arrives. Waiting only for the page header or table shell produces a screenshot full of loading skeletons. Wait for content that only exists once data has loaded — an icon inside a row's actions column, real row text, or a correct pagination count — not just the container.
 
 ## Adding a new recipe
 

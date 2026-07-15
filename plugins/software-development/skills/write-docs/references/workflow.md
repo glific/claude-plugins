@@ -18,12 +18,31 @@ Read what's needed for the task:
 
 ## 3. Research the Feature
 
+**Don't assume a local `glific-frontend` checkout exists.** Check first:
+
+```bash
+test -d ../glific-frontend && echo "local checkout" || echo "no local checkout — use GitHub"
+```
+
+- **Local checkout present** → read files directly at `../glific-frontend/...`.
+- **No local checkout** → read the same paths from the public repo instead, no cloning needed:
+  ```bash
+  gh api repos/glific/glific-frontend/contents/{path} --jq '.content' | base64 -d
+  ```
+  or browse `gh api repos/glific/glific-frontend/contents/{dir} --jq '.[].path'` to list a directory first.
+  This works for anyone with `gh` installed and no other local setup — treat it as the default,
+  not a fallback of last resort.
+
 **Mode A — Feature Name:**
-1. Find the container: `../glific-frontend/src/containers/{FeatureName}/`
+1. Find the container: `src/containers/{FeatureName}/` (local path or `gh api` — see above)
 2. Read the main list and form components (e.g. `FlowList.tsx`, `Flow.tsx`) to understand what the UI shows and does
-3. Read `../glific-frontend/src/routes/AuthenticatedRoute/AuthenticatedRoute.tsx` to find the URL route
+3. Read `src/routes/AuthenticatedRoute/AuthenticatedRoute.tsx` to find the URL route
 4. Check existing docs in `docs/` for the feature (search for the feature name in file names and content)
-5. Optionally read `../glific-frontend/src/graphql/queries/{Feature}.ts` to understand what data the feature displays
+5. Optionally read `src/graphql/queries/{Feature}.ts` to understand what data the feature displays
+6. **Verify against the running app, not just the source** — code comments can lag reality but a
+   live screenshot won't. Where feasible, confirm what you read in code (button labels, which
+   dialogs still fire, which options are visible) by loading the actual page during the screenshot
+   step (step 5 below) before writing anything.
 
 **Mode B — PR Number:**
 1. `gh pr diff #PR_NUMBER --repo glific/glific-frontend` to see what changed
