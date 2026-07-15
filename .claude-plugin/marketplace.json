@@ -37,7 +37,7 @@
     {
       "name": "software-development",
       "source": "./plugins/software-development",
-      "description": "Engineering workflows for Glific — live end-to-end browser testing of frontend features (test-feature skill + browser-tester agent)"
+      "description": "Engineering workflows for Glific — live end-to-end browser testing of frontend features (test-feature skill + browser-tester agent) and writing user-facing docs for glific/docs (write-docs skill)"
     }
   ]
 }
