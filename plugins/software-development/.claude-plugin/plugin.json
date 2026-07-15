@@ -1,7 +1,7 @@
 {
   "name": "software-development",
   "version": "0.1.0",
-  "description": "Engineering workflows for the Glific team — live end-to-end browser testing of frontend features (multi-scenario, latency, screenshots, generated tests, results sheet)",
+  "description": "Engineering workflows for the Glific team — live end-to-end browser testing of frontend features (multi-scenario, latency, screenshots, generated tests, results sheet) and writing user-facing documentation for glific/docs",
   "author": {
     "name": "Amisha Bisht"
   }

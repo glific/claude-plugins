@@ -1,7 +1,7 @@
 # software-development
 
 Engineering workflows for the Glific team. Today it ships the **end-to-end browser tester** for
-the Glific frontend.
+the Glific frontend and a **user-facing documentation writer** for `glific/docs`.
 
 ## What's inside
 
@@ -9,8 +9,11 @@ the Glific frontend.
 |-----------|------|--------------|
 | `test-feature` | skill | On-demand, comprehensive live E2E test of a Glific frontend feature via the **Playwright MCP**: builds a scenario matrix (happy + failure + edge), measures latency against budgets, captures a screenshot per scenario (success **and** error), generates the matching FE tests (Vitest + Cypress), and emits a results sheet (CSV + Markdown). Invoke with `/test-feature <feature>` (defaults to the Prompt Generator). |
 | `browser-tester` | agent | The autonomous/background version of the same contract — launch it to fully test or regression-test a feature against the live local stack before review or release. |
+| `write-docs` | skill | Generates or updates Glific's user-facing Docusaurus docs in `glific/docs`. Researches the feature in `glific-frontend` (or a shipped PR), places the page in the right IA section, captures screenshots via the Playwright recipe system, and writes the page following the docs style guide. Use when asked to "write docs for Flows" or "update docs for #142". |
 
-## Requirements
+## `test-feature` / `browser-tester`
+
+### Requirements
 
 - The **Playwright MCP** must be connected (the skill/agent drive a real Chromium through it).
 - The **local Glific stack** must be running — frontend `https://glific.test:3000` and backend
@@ -19,7 +22,7 @@ the Glific frontend.
 - **Login is behind reCAPTCHA** — the tester pauses and asks you to log in manually in the
   Playwright window; it never handles credentials.
 
-## Usage
+### Usage
 
 ```
 /test-feature                 # default: Prompt Generator wizard
@@ -29,13 +32,13 @@ the Glific frontend.
 
 Or ask Claude to "use the browser-tester agent to test <feature>".
 
-## Fix policy
+### Fix policy
 
 The tester may create/modify **test code** (Vitest specs, Cypress specs, mocks, fixtures). It will
 **not** edit application code to make a scenario pass — bugs and latency findings are written into
 the results sheet with a proposed fix and surfaced for your decision.
 
-## Output
+### Output
 
 A run writes `test-runs/<feature>-<timestamp>/` with `results.md`, `results.csv`, and a
 `screenshots/` folder (one PNG per scenario), and prints the results table inline.
@@ -43,3 +46,33 @@ A run writes `test-runs/<feature>-<timestamp>/` with `results.md`, `results.csv`
 See [skills/test-feature/SKILL.md](skills/test-feature/SKILL.md) and
 [skills/test-feature/reference.md](skills/test-feature/reference.md) for the full contract,
 scenario matrix, latency budget, results-sheet schema, and the Vitest/Cypress generation guide.
+
+## `write-docs`
+
+### Requirements
+
+- Run this skill from a checkout of **`glific/docs`**, with **`glific-frontend`** cloned as a
+  sibling directory (`../glific-frontend`) — the skill reads frontend source to research features.
+- To capture screenshots, the local Glific stack must be running and Playwright installed in
+  `glific/docs` (`yarn add --dev playwright js-yaml && npx playwright install chromium`), with
+  demo-account credentials in a gitignored `.env`. See
+  [skills/write-docs/references/screenshots.md](skills/write-docs/references/screenshots.md).
+
+### Usage
+
+Ask Claude, e.g.:
+- "Write docs for Flows"
+- "Update docs for #142 in glific-frontend"
+- "Review the HSM Templates doc for accuracy"
+
+The skill proposes a placement plan (doc path, image directory, screenshot recipe) and asks you to
+confirm before writing anything.
+
+### Output
+
+A new/updated page in `docs/{section}/`, screenshots in `static/img/{feature}/`, and a Playwright
+recipe in `scripts/recipes/{feature-slug}.yaml` — all meant to be committed together as one PR in
+`glific/docs`.
+
+See [skills/write-docs/SKILL.md](skills/write-docs/SKILL.md) for the full workflow, IA rules, style
+guide, and screenshot recipe format.
