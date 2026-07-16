@@ -20,6 +20,11 @@
       "description": "Customer support skills and agents for the Glific team"
     },
     {
+      "name": "documentation",
+      "source": "./plugins/documentation",
+      "description": "Writing user-facing documentation for glific/docs (write-docs skill)"
+    },
+    {
       "name": "hiring",
       "source": "./plugins/hiring",
       "description": "Hiring assistant for Glific"
@@ -37,7 +42,7 @@
     {
       "name": "software-development",
       "source": "./plugins/software-development",
-      "description": "Engineering workflows for Glific — live end-to-end browser testing of frontend features (test-feature skill + browser-tester agent) and writing user-facing docs for glific/docs (write-docs skill)"
+      "description": "Engineering workflows for Glific — live end-to-end browser testing of frontend features (test-feature skill + browser-tester agent)"
     }
   ]
 }

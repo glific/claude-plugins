@@ -1,0 +1,8 @@
+{
+  "name": "documentation",
+  "version": "0.1.0",
+  "description": "Writing user-facing documentation for glific/docs (write-docs skill)",
+  "author": {
+    "name": "Amisha Bisht"
+  }
+}
