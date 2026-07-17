@@ -87,10 +87,50 @@ login page. Redeploy with "Who has access" set to **Anyone**.
 **After editing `Code.gs`, deploy a new version.** Saving alone does nothing; the `/exec` URL
 keeps serving the old code. Deploy → Manage deployments → edit → Version: New version.
 
-## Sharing with the team
+## Who can see what — two separate doors
 
-Share the sheet read-only with whoever should see the results, and give the URL + token only
-to people who should be able to *write*. Reading the sheet needs no token at all.
+These get conflated constantly. They are unrelated:
+
+| Door | Guarded by | Grants |
+|---|---|---|
+| **The sheet** | normal Google sharing | reading/editing the actual data |
+| **The `/exec` URL** | `TRIAGE_TOKEN` | appending rows, reading the watermark |
+
+The token does **not** grant access to the sheet. Someone with the URL + token can write rows
+and enumerate incident ids; they cannot open the sheet unless you share it with their Google
+account. Conversely, someone you've shared the sheet with can read everything without ever
+knowing the token.
+
+**When a teammate runs the triage**, their client POSTs to your URL with the token, and Google
+executes the script as *you* — so the row lands under your identity. They never handle your
+credentials, and you never handle theirs. To let them *see* results, share the sheet read-only.
+
+**If the token leaks**, someone can write junk rows and read incident ids. Rotate it: change
+`TRIAGE_TOKEN` in Script Properties and redeploy. The old token dies immediately.
+
+**The bigger risk is the sheet being over-shared** — that exposes every diagnosis at once.
+Keep it to the people who need it.
+
+## Personal data
+
+Incident text comes from providers and can quote a contact's phone number, their message, or
+an echoed credential. Glific carries WhatsApp traffic for NGOs, so treat this as a real risk,
+not a theoretical one.
+
+`append-to-sheet.mjs` redacts phone numbers, emails, credentials, JWTs and opaque blobs from
+free-text fields before they leave. Verify it still works after any edit:
+
+```bash
+node scripts/test-redact.mjs
+```
+
+**It is a backstop, not a guarantee.** Regexes cannot catch a name in prose or a sentence a
+contact typed — the test file documents these limits explicitly rather than hiding them. The
+controls that actually hold are: keep sheet sharing tight, and write diagnoses that paraphrase
+instead of quoting. The SKILL's "Personal data" section is the rule the diagnosis step follows.
+
+`contact_id` is deliberately not a column. `org_id` and `flow_id` are — they're pseudonymous
+and the trend analysis needs them.
 
 ## AppSignal access
 

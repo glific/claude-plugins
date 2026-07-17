@@ -16,6 +16,57 @@
 const URL_ = process.env.GLIFIC_TRIAGE_SHEET_URL;
 const TOKEN = process.env.GLIFIC_TRIAGE_TOKEN;
 
+/** Free-text fields that can carry provider output, and therefore user data. */
+const TEXT_FIELDS = ['reason', 'root_cause', 'repro_steps', 'impact', 'action_item'];
+const MAX_TEXT = 500;
+
+/**
+ * Scrub obvious secrets and personal data out of free text before it leaves for the sheet.
+ *
+ * Glific is a WhatsApp platform: a provider error string can quote a contact's phone
+ * number or their message, and a credential error can echo the credential. AppSignal's
+ * access controls do not follow that text into a spreadsheet, so it gets scrubbed here —
+ * at the boundary, once, rather than trusting every caller to remember.
+ *
+ * This is defence in depth, NOT a guarantee. Regexes cannot recognise a name or a
+ * sentence a contact typed. The real controls are: keep the sheet's Google sharing
+ * tight, and write diagnoses that paraphrase rather than quote. See SKILL.md.
+ */
+export function redact(text) {
+  if (typeof text !== 'string' || !text) return text;
+
+  let out = text
+    // Credentials first, before the generic blob rules can half-eat them.
+    // The `(?:bearer\s+)?` is load-bearing: without it, "Authorization: Bearer sk-xxx"
+    // consumes "Bearer" as the value and leaves the actual secret in the string —
+    // output that looks redacted but is not. See test-redact.mjs.
+    .replace(
+      /\b(authorization|bearer|token|api[_-]?key|apikey|secret|password|passwd|pwd)\b\s*[:=]?\s*(?:bearer\s+)?\S+/gi,
+      '$1=[REDACTED]'
+    )
+    .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '[UUID]')
+    // contact details
+    .replace(/\b[\w.+-]+@[\w-]+\.[\w.-]+\b/g, '[EMAIL]')
+    .replace(/(?<![\w.])\+?\d[\d\s().-]{8,17}\d(?![\w.])/g, '[PHONE]')
+    // Opaque blobs. Hex before base64 — hex is a subset of the base64 charset, so the
+    // generic rule would otherwise swallow every digest and mislabel it.
+    .replace(/\beyJ[\w-]{10,}\.[\w-]+\.[\w-]+/g, '[JWT]')
+    .replace(/\b[0-9a-f]{32,}\b/gi, '[HASH]')
+    .replace(/\b[A-Za-z0-9+/]{32,}={0,2}\b/g, '[TOKEN]');
+
+  if (out.length > MAX_TEXT) out = `${out.slice(0, MAX_TEXT)}… [truncated]`;
+  return out;
+}
+
+/** Apply redaction to every free-text field on a row. */
+export function redactRow(row) {
+  const clean = { ...row };
+  for (const f of TEXT_FIELDS) {
+    if (clean[f] != null) clean[f] = redact(String(clean[f]));
+  }
+  return clean;
+}
+
 function die(msg) {
   console.error(`error: ${msg}`);
   process.exit(1);
@@ -57,23 +108,28 @@ async function watermark() {
     console.log(JSON.stringify({ lastSeen: null, incidentIds: [], rowCount: 0, dryRun: true }));
     return;
   }
-  const out = await call(`${URL_}?action=watermark`, { method: 'GET' });
+  const q = new URLSearchParams({ action: 'watermark', ...(TOKEN ? { token: TOKEN } : {}) });
+  const out = await call(`${URL_}?${q}`, { method: 'GET' });
   if (out.error) die(out.error);
   console.log(JSON.stringify(out));
 }
 
 async function upsert() {
-  const rows = await readStdin();
-  if (!Array.isArray(rows)) die('stdin must be a JSON array of row objects');
+  const input = await readStdin();
+  if (!Array.isArray(input)) die('stdin must be a JSON array of row objects');
 
-  const missing = rows.filter((r) => !r.incident_id);
+  const missing = input.filter((r) => !r.incident_id);
   if (missing.length) die(`${missing.length} row(s) missing incident_id — that is the dedup key`);
+
+  const rows = input.map(redactRow);
 
   if (!URL_) {
     console.log(`[dry run] GLIFIC_TRIAGE_SHEET_URL unset — would upsert ${rows.length} row(s):`);
     for (const r of rows) {
-      console.log(`  ${r.incident_id}  ${r.error_type || '?'}  ${(r.reason || '').slice(0, 60)}`);
+      console.log(`  ${r.incident_id}  ${r.error_type || '?'}  ${(r.reason || '').slice(0, 70)}`);
     }
+    const scrubbed = rows.filter((r, i) => r.reason !== input[i].reason).length;
+    if (scrubbed) console.log(`(redacted free text in ${scrubbed} row(s) before send)`);
     return;
   }
 
@@ -86,7 +142,13 @@ async function upsert() {
   console.log(`inserted ${out.inserted}, updated ${out.updated}, total ${out.total}`);
 }
 
-const cmd = process.argv[2];
-if (cmd === 'watermark') await watermark();
-else if (cmd === 'upsert') await upsert();
-else die(`usage: append-to-sheet.mjs <watermark|upsert>`);
+// Importable for tests; only runs the CLI when invoked directly.
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const cmd = process.argv[2];
+  if (cmd === 'watermark') await watermark();
+  else if (cmd === 'upsert') await upsert();
+  else if (cmd === 'redact-test') {
+    const sample = await readStdin();
+    console.log(JSON.stringify(sample.map(redactRow), null, 2));
+  } else die(`usage: append-to-sheet.mjs <watermark|upsert>`);
+}

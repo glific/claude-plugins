@@ -98,11 +98,19 @@ check('blank incident_id skipped', post([{ incident_id: '  ' }]).inserted === 0)
 
 console.log('\n-- watermark');
 post([{ incident_id: '900', last_seen: '2026-07-16T10:00:00Z' }, { incident_id: '901', last_seen: '2026-07-17T09:00:00Z' }]);
-const wm = doGet({ parameter: { action: 'watermark' } });
+const get = (params) => doGet({ parameter: { action: 'watermark', ...params } });
+const wm = get({ token: 'secret-token' });
 check('lastSeen = newest', wm.lastSeen === '2026-07-17T09:00:00Z', wm.lastSeen);
 check('incidentIds complete', ['511', '526', '519', '777', '900', '901'].every((i) => wm.incidentIds.includes(i)), JSON.stringify(wm.incidentIds));
 check('header not counted', wm.rowCount === grid.length - 1, `rowCount=${wm.rowCount} grid=${grid.length}`);
-check('unknown action errors', doGet({ parameter: { action: 'zzz' } }).error !== undefined);
+check('unknown action errors', doGet({ parameter: { action: 'zzz', token: 'secret-token' } }).error !== undefined);
+
+// Regression guard. "Who has access: Anyone" means an unauthenticated caller can reach
+// doGet, so dropping this check would expose every incident id to anyone with the URL.
+console.log('\n-- watermark requires the token (reads are guarded too)');
+check('no token rejected', get({}).error === 'unauthorized', JSON.stringify(get({})));
+check('bad token rejected', get({ token: 'wrong' }).error === 'unauthorized');
+check('no data leaks on reject', get({}).incidentIds === undefined);
 
 console.log(`\n${failures === 0 ? 'ALL PASS' : failures + ' FAILURE(S)'} — ${grid.length - 1} data rows\n`);
 process.exit(failures ? 1 : 0);

@@ -87,9 +87,18 @@ function indexRows_(sh) {
  * it already has without a second round trip.
  */
 function doGet(e) {
-  const action = (e && e.parameter && e.parameter.action) || 'watermark';
+  const params = (e && e.parameter) || {};
+  const action = params.action || 'watermark';
   if (action !== 'watermark') {
     return json_({ error: 'unknown action: ' + action });
+  }
+
+  // Reads need the token too. "Who has access: Anyone" is what lets an unauthenticated
+  // client call this at all, so without a check here the watermark — and every incident
+  // id in the sheet — is readable by anyone who obtains the URL.
+  const token = expectedToken_();
+  if (token && params.token !== token) {
+    return json_({ error: 'unauthorized' });
   }
 
   const sh = sheet_();
