@@ -6,14 +6,14 @@
  *   node append-to-sheet.mjs upsert < rows.json # rows.json = [{ incident_id, ... }]
  *
  * Env:
- *   GLIFIC_TRIAGE_SHEET_URL   Apps Script Web App /exec URL   (required)
+ *   GLIFIC_TRIAGE_WEBAPP_URL   Apps Script Web App /exec URL   (required)
  *   GLIFIC_TRIAGE_TOKEN       shared secret, if the script sets one
  *
  * With no URL set, `upsert` does a dry run and prints what it would send — useful
  * for a first pass before the sheet exists.
  */
 
-const URL_ = process.env.GLIFIC_TRIAGE_SHEET_URL;
+const URL_ = process.env.GLIFIC_TRIAGE_WEBAPP_URL;
 const TOKEN = process.env.GLIFIC_TRIAGE_TOKEN;
 
 /** Free-text fields that can carry provider output, and therefore user data. */
@@ -124,7 +124,7 @@ async function upsert() {
   const rows = input.map(redactRow);
 
   if (!URL_) {
-    console.log(`[dry run] GLIFIC_TRIAGE_SHEET_URL unset — would upsert ${rows.length} row(s):`);
+    console.log(`[dry run] GLIFIC_TRIAGE_WEBAPP_URL unset — would upsert ${rows.length} row(s):`);
     for (const r of rows) {
       console.log(`  ${r.incident_id}  ${r.error_type || '?'}  ${(r.reason || '').slice(0, 70)}`);
     }

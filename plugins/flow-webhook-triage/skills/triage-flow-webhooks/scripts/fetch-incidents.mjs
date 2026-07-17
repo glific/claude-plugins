@@ -48,12 +48,19 @@ async function gql(query, variables = {}) {
   }
 
   if (res.status === 401 || body.errors?.some((e) => /authenticat/i.test(e.message || ''))) {
+    // Report what AppSignal said; do not guess WHY. An earlier version asserted
+    // "this is probably a push key", which was a hunch dressed as a diagnosis and
+    // sent people hunting for the wrong problem.
+    const said = body.errors?.[0]?.message || `HTTP ${res.status}`;
     die(
-      'AppSignal rejected the token (401).\n' +
-        '  This is almost always a PUSH key rather than a Personal API token.\n' +
-        '  Push keys live on the app settings page and can only SEND data.\n' +
-        '  Get a Personal API token from your AppSignal *user* settings, and put it\n' +
-        '  in APPSIGNAL_API_KEY.'
+      `AppSignal rejected the token: ${said}\n` +
+        '\n  Things worth checking, in order:\n' +
+        '  1. Is APPSIGNAL_API_KEY a *Personal API token* from https://appsignal.com/users/edit ?\n' +
+        '     A push API key (app settings, used by the app to SEND errors) cannot read.\n' +
+        '  2. Does that account have access to the app you are querying?\n' +
+        '  3. Did the value survive the copy? Compare `echo ${#APPSIGNAL_API_KEY}` in your\n' +
+        '     shell against the token on the page — a truncated paste looks exactly like this.\n' +
+        '  4. Has the token been regenerated since you copied it?'
     );
   }
   if (body.errors) die(`GraphQL: ${JSON.stringify(body.errors).slice(0, 500)}`);

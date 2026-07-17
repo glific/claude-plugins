@@ -164,7 +164,7 @@ node scripts/append-to-sheet.mjs upsert < rows.json
 # -> inserted 4, updated 11, total 213
 ```
 
-Unset `GLIFIC_TRIAGE_SHEET_URL` does a dry run and prints what it would have sent — use it on
+Unset `GLIFIC_TRIAGE_WEBAPP_URL` does a dry run and prints what it would have sent — use it on
 a first pass. The script dedups server-side on `incident_id` under a lock, so a re-run is
 idempotent and two people triaging at once can't double-write.
 

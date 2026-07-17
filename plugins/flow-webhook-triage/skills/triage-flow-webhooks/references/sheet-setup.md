@@ -1,6 +1,34 @@
 # Setup — sheet and AppSignal
 
-One-time, by whoever owns the triage sheet. Everyone else needs only the URL and token.
+## Read this first: there is ONE shared sheet
+
+The team writes to a single sheet. That is the point — dedup, `times_seen`, and the
+month-scale pattern analysis all depend on everyone's runs landing in the same place. Six
+personal sheets would mean six diagnoses of the same incident and no shared history.
+
+So **most people do not do the sheet setup at all.** Only its owner does, once.
+
+**If a sheet already exists** (ask the team), you need three env vars and nothing else — no
+Apps Script, no deploy, no sheet creation:
+
+```bash
+export GLIFIC_TRIAGE_WEBAPP_URL="...the team's /exec URL..."  # shared with you
+export GLIFIC_TRIAGE_TOKEN="...the team's token..."          # shared with you
+export APPSIGNAL_API_KEY="...your own Personal API token..." # YOURS — see below
+```
+
+The first two are the owner's and get shared (password manager, not the repo). The third is
+personal: AppSignal tokens are tied to your identity, so sharing one destroys attribution and
+means revoking it breaks everyone. Generate your own.
+
+Then skip to **AppSignal access** below. The rest of this page is for the sheet's owner.
+
+---
+
+# Owner setup
+
+One-time, by whoever owns the triage sheet. Do this only if there is no sheet yet, or you
+deliberately need a separate one (staging vs prod, a different team).
 
 ## Why it's built this way
 
@@ -70,7 +98,7 @@ Copy the `/exec` URL.
 ## 5. Point the skill at it
 
 ```bash
-export GLIFIC_TRIAGE_SHEET_URL="https://script.google.com/macros/s/AKfycb.../exec"
+export GLIFIC_TRIAGE_WEBAPP_URL="https://script.google.com/macros/s/AKfycb.../exec"
 export GLIFIC_TRIAGE_TOKEN="the token from step 3"
 ```
 
@@ -104,6 +132,21 @@ knowing the token.
 **When a teammate runs the triage**, their client POSTs to your URL with the token, and Google
 executes the script as *you* — so the row lands under your identity. They never handle your
 credentials, and you never handle theirs. To let them *see* results, share the sheet read-only.
+
+**How the write finds your sheet without a sheet id anywhere:** the script is *bound* to the
+spreadsheet — created from inside it via Extensions → Apps Script — so
+`SpreadsheetApp.getActiveSpreadsheet()` resolves to its container. ("Active" is a misnomer; it
+means "the sheet I belong to", not "the sheet someone has open".) The identity lives in the
+deployment, not the code, which is why the URL alone routes a teammate's rows into your sheet,
+and why the same `Code.gs` can back a second sheet with no edits.
+
+So there are three things to hand out, for three different purposes:
+
+| To let them… | Give them | How |
+|---|---|---|
+| **see** results | the sheet | Google share, read-only |
+| **run** the triage | the `/exec` URL + `TRIAGE_TOKEN` | password manager or DM — never the repo |
+| **own a separate sheet** | nothing — they follow *Owner setup* | only for a genuinely separate scope |
 
 **If the token leaks**, someone can write junk rows and read incident ids. Rotate it: change
 `TRIAGE_TOKEN` in Script Properties and redeploy. The old token dies immediately.
