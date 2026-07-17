@@ -44,8 +44,10 @@ async function call(url, init) {
   } catch {
     // A login page instead of JSON is the classic symptom of a bad deployment.
     die(
-      'response was not JSON — is the Web App deployed with access set to ' +
-        `"Anyone with the link"? First 200 chars: ${text.slice(0, 200)}`
+      'response was not JSON — this is usually a Google login page, meaning the Web App\n' +
+        '  deployment has "Who has access" set to something other than "Anyone".\n' +
+        '  Any other setting requires the caller to be signed into Google; this script is not.\n' +
+        `  First 200 chars: ${text.slice(0, 200)}`
     );
   }
 }

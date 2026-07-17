@@ -1,7 +1,7 @@
 /**
  * Glific flow-webhook triage — sheet Web App.
  *
- * Bound to the triage sheet, deployed as "execute as me / anyone with the link".
+ * Bound to the triage sheet, deployed with "Execute as: Me" + "Who has access: Anyone".
  * The sheet owner's own Google identity does every write, so no credentials are
  * ever shared with the people running the skill — they only need the URL.
  *

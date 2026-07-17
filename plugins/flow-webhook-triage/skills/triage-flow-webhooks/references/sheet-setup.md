@@ -42,11 +42,25 @@ Deploy → New deployment → **Web app**:
 | Field | Value |
 |---|---|
 | Execute as | **Me** |
-| Who has access | **Anyone with the link** |
+| Who has access | **Anyone** |
 
 "Execute as: Me" is what makes the no-shared-creds property work — the script writes with the
-owner's identity. "Anyone with the link" governs who may *call* it, which is why step 3 isn't
-optional.
+owner's identity.
+
+"Who has access" must be **Anyone** (older Google docs call this "Anyone with the link"). The
+other choices all require the *caller* to be signed into Google, and the script POSTs with a
+plain `fetch` that has no Google session — it would be bounced to a login page and get HTML
+back instead of JSON:
+
+| Option | Works? |
+|---|---|
+| **Anyone** | ✅ no caller auth — `TRIAGE_TOKEN` is what guards it |
+| Anyone with Google account | ❌ caller must be signed in |
+| Anyone within *your org* | ❌ same, just narrower |
+| Only myself | ❌ same |
+
+**Anyone** is why step 3 is not optional. The URL is unguessable and the token is checked on
+every write, so a leaked URL without the token gets `unauthorized`.
 
 Google will ask you to authorise the script against your account. The "unverified app" warning
 is expected for a personal script — Advanced → Go to (project).
@@ -68,7 +82,7 @@ node scripts/append-to-sheet.mjs watermark
 ```
 
 **If you get HTML instead of JSON**, the deployment's access is wrong — you're seeing a Google
-login page. Redeploy with "Anyone with the link".
+login page. Redeploy with "Who has access" set to **Anyone**.
 
 **After editing `Code.gs`, deploy a new version.** Saving alone does nothing; the `/exec` URL
 keeps serving the old code. Deploy → Manage deployments → edit → Version: New version.
