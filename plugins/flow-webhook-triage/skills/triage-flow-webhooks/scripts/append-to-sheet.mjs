@@ -2,8 +2,8 @@
 /**
  * Client for the triage sheet Web App.
  *
- *   node append-to-sheet.mjs watermark          # -> { lastSeen, incidentIds, rowCount }
- *   node append-to-sheet.mjs upsert < rows.json # rows.json = [{ incident_id, ... }]
+ *   node append-to-sheet.mjs watermark          # -> { lastSeen, signatureKeys, rowCount }
+ *   node append-to-sheet.mjs upsert < rows.json # rows.json = [{ signature_key, ... }]
  *
  * Env:
  *   GLIFIC_TRIAGE_WEBAPP_URL   Apps Script Web App /exec URL   (required)
@@ -105,7 +105,7 @@ async function call(url, init) {
 
 async function watermark() {
   if (!URL_) {
-    console.log(JSON.stringify({ lastSeen: null, incidentIds: [], rowCount: 0, dryRun: true }));
+    console.log(JSON.stringify({ lastSeen: null, signatureKeys: [], rowCount: 0, dryRun: true }));
     return;
   }
   const q = new URLSearchParams({ action: 'watermark', ...(TOKEN ? { token: TOKEN } : {}) });
@@ -118,15 +118,18 @@ async function upsert() {
   const input = await readStdin();
   if (!Array.isArray(input)) die('stdin must be a JSON array of row objects');
 
-  const missing = input.filter((r) => !r.incident_id);
-  if (missing.length) die(`${missing.length} row(s) missing incident_id — that is the dedup key`);
+  const missing = input.filter((r) => !r.signature_key);
+  if (missing.length)
+    die(`${missing.length} row(s) missing signature_key — that is the dedup key`);
 
   const rows = input.map(redactRow);
 
   if (!URL_) {
     console.log(`[dry run] GLIFIC_TRIAGE_WEBAPP_URL unset — would upsert ${rows.length} row(s):`);
     for (const r of rows) {
-      console.log(`  ${r.incident_id}  ${r.error_type || '?'}  ${(r.reason || '').slice(0, 70)}`);
+      console.log(
+        `  ${r.signature_key}  ${(r.webhook_name || '-').padEnd(22)} ${(r.error_type || '-').padEnd(10)} ${(r.reason || '').slice(0, 50)}`
+      );
     }
     const scrubbed = rows.filter((r, i) => r.reason !== input[i].reason).length;
     if (scrubbed) console.log(`(redacted free text in ${scrubbed} row(s) before send)`);

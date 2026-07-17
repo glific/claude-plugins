@@ -6,10 +6,10 @@
  * ever shared with the people running the skill — they only need the URL.
  *
  * Two endpoints:
- *   GET  ?action=watermark  -> { lastSeen, incidentIds, rowCount }
+ *   GET  ?action=watermark&token=… -> { lastSeen, signatureKeys, rowCount }
  *   POST { token, rows: [] } -> upsert; returns { inserted, updated }
  *
- * Upsert, not append: a recurring incident updates its existing row and bumps
+ * Upsert, not append: a recurring signature updates its existing row and bumps
  * times_seen. That is what makes repeat offenders sortable, and it is why two
  * people running the triage on the same day cannot double-write.
  */
@@ -17,12 +17,18 @@
 const SHEET_NAME = 'triage';
 
 // Column order. Changing this means migrating the sheet — add to the end instead.
+//
+// The dedup key is signature_key, NOT the AppSignal incident number. AppSignal groups by
+// exception class, and this subsystem uses deliberately low-cardinality classes, so one
+// incident bundles unrelated failures (#511 "SystemError" spanned four different webhooks).
+// A signature is (namespace, exception_class, webhook_name, error_type, reason_shape) —
+// the actual unit a human can diagnose and fix.
 const COLUMNS = [
-  'incident_id',      // dedup key — stable across runs
-  'first_seen',       // when we first recorded it
-  'last_seen',        // latest occurrence seen in AppSignal
+  'signature_key',    // dedup key — hash of the signature tuple, stable across runs
+  'first_seen',       // earliest sample seen for this signature
+  'last_seen',        // latest sample seen for this signature
   'last_run_date',    // when the triage last touched this row
-  'times_seen',       // runs this incident has appeared in — the repeat signal
+  'times_seen',       // runs this signature has appeared in — the repeat signal
   'namespace',
   'exception_class',
   'webhook_name',     // internal name, e.g. unified-llm-call
@@ -30,10 +36,14 @@ const COLUMNS = [
   'error_type',
   'kaapi_error_type',
   'http_status',
-  'occurrences',      // AppSignal's count for this incident
-  'org_id',
-  'flow_id',
-  'reason',
+  'sample_count',     // samples matching this signature — proportion, NOT true volume
+  'incident_count',   // parent incident's total, across ALL its signatures (context only)
+  'incident_number',  // link back to AppSignal
+  'org_count',        // distinct orgs hit — many orgs on one config error = product defect
+  'org_ids',
+  'flow_ids',
+  'reason',           // representative (most recent), redacted client-side
+  'reason_shape',     // normalised form the signature groups on
   'category',         // missing-classification | novel-failure | contract-violation | correct
   'root_cause',
   'repro_steps',
@@ -43,6 +53,9 @@ const COLUMNS = [
   'code_refs',
   'appsignal_url',
 ];
+
+/** The dedup key column. */
+const KEY = 'signature_key';
 
 /** Shared secret, set in Script Properties. Absent = open, which is fine for a private URL. */
 function expectedToken_() {
@@ -55,8 +68,21 @@ function sheet_() {
   if (!sh) {
     sh = ss.insertSheet(SHEET_NAME);
   }
+
   if (sh.getLastRow() === 0) {
-    sh.appendRow(COLUMNS);
+    sh.getRange(1, 1, 1, COLUMNS.length).setValues([COLUMNS]);
+    sh.setFrozenRows(1);
+    return sh;
+  }
+
+  // The header is NOT write-once. Rows are written positionally against COLUMNS, so a
+  // header left over from an older deployment silently mislabels every column — the data
+  // is right and every name is wrong, which reads fine and is therefore worse than an
+  // error. (This happened for real: a 24-column header survived a change to 28 columns,
+  // leaving `occurrences` above sample_count and `org_id` above incident_count.)
+  const header = sh.getRange(1, 1, 1, COLUMNS.length).getValues()[0];
+  if (COLUMNS.some((c, i) => header[i] !== c)) {
+    sh.getRange(1, 1, 1, COLUMNS.length).setValues([COLUMNS]);
     sh.setFrozenRows(1);
   }
   return sh;
@@ -68,7 +94,7 @@ function json_(obj) {
   );
 }
 
-/** Map incident_id -> row number (1-indexed, including header). */
+/** Map signature_key -> row number (1-indexed, including header). */
 function indexRows_(sh) {
   const last = sh.getLastRow();
   const index = {};
@@ -83,8 +109,8 @@ function indexRows_(sh) {
 
 /**
  * Watermark: the resume point. Returns the newest last_seen plus every known
- * incident id, so the caller can both narrow its AppSignal query and skip rows
- * it already has without a second round trip.
+ * signature key, so the caller can both narrow its AppSignal query and skip
+ * re-diagnosing signatures it already has, without a second round trip.
  */
 function doGet(e) {
   const params = (e && e.parameter) || {};
@@ -104,17 +130,17 @@ function doGet(e) {
   const sh = sheet_();
   const last = sh.getLastRow();
   if (last < 2) {
-    return json_({ lastSeen: null, incidentIds: [], rowCount: 0 });
+    return json_({ lastSeen: null, signatureKeys: [], rowCount: 0 });
   }
 
   const values = sh.getRange(2, 1, last - 1, COLUMNS.length).getValues();
   const lastSeenCol = COLUMNS.indexOf('last_seen');
   let lastSeen = null;
-  const incidentIds = [];
+  const signatureKeys = [];
 
   for (const row of values) {
     const id = String(row[0]).trim();
-    if (id) incidentIds.push(id);
+    if (id) signatureKeys.push(id);
     const seen = row[lastSeenCol];
     if (seen) {
       const iso = seen instanceof Date ? seen.toISOString() : String(seen);
@@ -122,7 +148,7 @@ function doGet(e) {
     }
   }
 
-  return json_({ lastSeen: lastSeen, incidentIds: incidentIds, rowCount: values.length });
+  return json_({ lastSeen: lastSeen, signatureKeys: signatureKeys, rowCount: values.length });
 }
 
 function doPost(e) {
@@ -163,10 +189,10 @@ function doPost(e) {
     const pendingIds = {}; // ids queued for insert in THIS batch, but not yet in `index`
 
     for (const row of rows) {
-      const id = String(row.incident_id || '').trim();
+      const id = String(row[KEY] || '').trim();
       if (!id) continue;
 
-      // Same id twice in one batch: the first wins. Must be checked before the
+      // Same signature twice in one batch: the first wins. Must be checked before the
       // `index` lookup — a queued row has no row number to update yet.
       if (pendingIds[id]) continue;
 
@@ -179,7 +205,10 @@ function doPost(e) {
           last_seen: row.last_seen || '',
           last_run_date: today,
           times_seen: prev + 1,
-          occurrences: row.occurrences || '',
+          sample_count: row.sample_count || '',
+          incident_count: row.incident_count || '',
+          org_count: row.org_count || '',
+          org_ids: row.org_ids || '',
           http_status: row.http_status || '',
         };
         for (const key of Object.keys(patch)) {
