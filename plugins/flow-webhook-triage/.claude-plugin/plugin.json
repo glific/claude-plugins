@@ -1,0 +1,8 @@
+{
+  "name": "flow-webhook-triage",
+  "version": "0.1.0",
+  "description": "Daily triage of Glific flow-webhook errors — pulls AppSignal incidents from the flow_webhooks and flow_webhook_config_errors namespaces, diagnoses each against the code, and upserts a dated diagnosis row into a shared Google Sheet for trend analysis",
+  "author": {
+    "name": "Amisha Bisht"
+  }
+}
