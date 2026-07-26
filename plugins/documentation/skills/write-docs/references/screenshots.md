@@ -2,9 +2,9 @@
 
 Automated Playwright-based screenshot capture. Recipes define what to capture; `scripts/screenshot.js` (in `glific/docs`) runs them.
 
-**Any reachable Glific instance works** — a local dev stack (`https://glific.test:3000`) or a
-staging/demo deployment (e.g. `https://staging.glific.com`). Don't assume the user has the local
-backend/frontend stack running; a staging URL is a fine default and needs no other local setup.
+**Point the script at a live deployment the user gives you** — staging, demo, or any hosted Glific
+instance (e.g. `https://staging.glific.com`). Never spin up or depend on a local dev stack: a live
+URL needs no local setup, and starting someone's backend and frontend is not your call.
 
 ## One-time setup
 
@@ -16,41 +16,62 @@ yarn add --dev playwright js-yaml
 npx playwright install chromium
 ```
 
-### 2. Get credentials — always ask, up front
+### 2. Get credentials — ask the user once
 
-**Always ask the user for all three values before doing anything else** — don't check for a
-`.env` file first, don't ask one value at a time, don't ask about approach and then circle back
-for credentials. First message, one shot:
+**Ask the user for all three values before taking any screenshot.** These are credentials to a
+live Glific instance, so the user picks which instance and which account gets used — not a file
+on disk.
 
-- Glific URL (local dev, e.g. `https://glific.test:3000`, or staging/demo, e.g. `https://staging.glific.com`)
+- Glific URL of a live deployment (e.g. staging/demo `https://staging.glific.com`)
 - Phone number for a **test/demo account** — never production
 - Password for that account
 
-Pass the values as environment variables to the script invocation; never write the password into
-a script file, a `.env` you commit, or any file that isn't gitignored.
+Ask in one message, not one value at a time, and not after circling back from a question about
+approach.
+
+**Ask once per session, then reuse.** Once the user has given you the three values, keep using them
+for every later run in that conversation — re-running a recipe, fixing a selector, or capturing a
+second feature. Only ask again if the user says to use a different instance or account, or if the
+credentials stop working.
+
+**Never source credentials from anywhere but that answer:**
+
+| Don't | Why |
+|---|---|
+| Read `.env`, `.env.local`, or any dotfile for `GLIFIC_*` values | Whatever is in there was set for someone else's purpose, and may point at production |
+| Grep a file for the phone/password and pipe it into the command | Same thing, one step removed — still not the user's choice |
+| Write the values into `.env`, the recipe, or the script | Passwords do not belong in files, gitignored or not |
+
+Pass the values inline to each invocation that needs them, so they live only in that command:
+
+```bash
+GLIFIC_URL={url} GLIFIC_PHONE={phone} GLIFIC_PASSWORD={password} \
+  node scripts/screenshot.js {feature-slug}
+```
+
+The script also reads `.env` as a convenience for humans running it by hand. Inline variables
+override it — do not fall back to it when the user hasn't answered. If the user declines to share
+credentials, write the doc with `:::info Screenshot coming soon` placeholders and hand them the
+command to run themselves.
 
 Note: the phone field on the login page is a **country-code selector + local-number input** —
 pass the number *without* the country code prefix (e.g. `7905556238`, not `+917905556238`), or
 `fill()` on `input[name="phoneNumber"]` will leave the field looking empty and login will silently
-not submit.
+not submit. If the user gives you a number with a `+91`, strip it before passing it.
 
-### 3. Local stack (only if using a local dev URL)
-
-If `GLIFIC_URL` points at `glific.test`, the local backend and frontend must be running:
-- Backend: follow `glific/glific` setup (Elixir/Phoenix on port 4001)
-- Frontend: `cd ../glific-frontend && yarn dev` (runs at `https://glific.test:3000`)
-
-The script ignores HTTPS certificate errors from `mkcert`, so the self-signed cert is fine. Skip
-this section entirely when pointing at a staging/demo URL.
+Note this does **not** change where you read code: source always comes from GitHub
+(`glific/glific-frontend`, `glific/glific`), never from a local checkout.
 
 ## Running the script
 
 ```bash
 # Single feature
-node scripts/screenshot.js flows
+GLIFIC_URL={url} GLIFIC_PHONE={phone} GLIFIC_PASSWORD={password} \
+  node scripts/screenshot.js flows
 
 # All recipes
-node scripts/screenshot.js
+GLIFIC_URL={url} GLIFIC_PHONE={phone} GLIFIC_PASSWORD={password} \
+  node scripts/screenshot.js
 
 # Output lands in static/img/{output_dir}/
 ```
@@ -83,6 +104,8 @@ flows:
 | `wait: 'selector'` | Wait for CSS selector to appear (8s timeout) |
 | `wait_text: 'text'` | Wait for visible text to appear on the page |
 | `click: 'selector'` | Click a CSS selector |
+| `hover: 'selector'` | Hover the first match — for UI that only appears on hover (tooltips, row previews) |
+| `move_mouse_away: true` | Park the cursor in a corner so leftover hover state doesn't bleed into the next snap |
 | `snap: filename.png` | Take a full-viewport screenshot |
 | `snap: filename.png` + `element: 'selector'` | Crop to that element only — hides sidebar, nav, unrelated UI |
 | `sleep: 500` | Wait N milliseconds (use sparingly, prefer `wait`) |
@@ -137,8 +160,19 @@ Login selectors (from `Auth.tsx` / `Login.tsx`):
 
 ## Adding a new recipe
 
-1. Find the feature's route in `../glific-frontend/src/routes/AuthenticatedRoute/AuthenticatedRoute.tsx`
-2. Find `data-testid` attributes in `../glific-frontend/src/containers/{Feature}/`
+Read both source files from GitHub, not from a local checkout:
+
+1. Find the feature's route:
+   ```bash
+   gh api repos/glific/glific-frontend/contents/src/routes/AuthenticatedRoute/AuthenticatedRoute.tsx \
+     -H 'Accept: application/vnd.github.raw'
+   ```
+2. Find `data-testid` attributes in the feature's containers:
+   ```bash
+   gh api repos/glific/glific-frontend/contents/src/containers/{Feature} --jq '.[].name'
+   gh api repos/glific/glific-frontend/contents/src/containers/{Feature}/{File}.tsx \
+     -H 'Accept: application/vnd.github.raw' | grep data-testid
+   ```
 3. Create `scripts/recipes/{feature-slug}.yaml`
-4. Run `node scripts/screenshot.js {feature-slug}` and iterate on selectors until all snaps land
+4. Ask the user for credentials, then run the script with them inline and iterate on selectors until all snaps land
 5. Commit the recipe + screenshots together with the doc page
