@@ -18,28 +18,57 @@ Read what's needed for the task:
 
 ## 3. Research the Feature
 
-**Don't assume a local `glific-frontend` checkout exists.** Check first:
+**Read all source from GitHub. Never read it from a local checkout, even if one exists on this
+machine.** A local clone is on some working branch with uncommitted changes; the docs must describe
+what shipped on the default branch.
+
+Two repos matter:
+
+- `glific/glific-frontend` — the UI: screens, labels, fields, routes
+- `glific/glific` — the backend: limits, statuses, validations, org flags
+
+Fetch a file (no cloning, no `base64 -d` step):
 
 ```bash
-test -d ../glific-frontend && echo "local checkout" || echo "no local checkout — use GitHub"
+gh api repos/glific/glific-frontend/contents/{path} -H 'Accept: application/vnd.github.raw'
 ```
 
-- **Local checkout present** → read files directly at `../glific-frontend/...`.
-- **No local checkout** → read the same paths from the public repo instead, no cloning needed:
-  ```bash
-  gh api repos/glific/glific-frontend/contents/{path} --jq '.content' | base64 -d
-  ```
-  or browse `gh api repos/glific/glific-frontend/contents/{dir} --jq '.[].path'` to list a directory first.
-  This works for anyone with `gh` installed and no other local setup — treat it as the default,
-  not a fallback of last resort.
+List a directory before guessing at filenames:
+
+```bash
+gh api repos/glific/glific-frontend/contents/{dir} --jq '.[].name'
+```
+
+Find where something lives when you don't know the path:
+
+```bash
+gh search code 'templateV2Enabled' --repo glific/glific-frontend --json path --jq '.[].path'
+```
+
+Read a specific released version by appending `?ref={branch-or-tag}` to a contents URL. Omit it to
+get the default branch, which is what you want unless the user names a release.
+
+If `gh` is not installed or not authenticated (`gh auth status`), stop and tell the user — do not
+silently fall back to a local checkout.
 
 **Mode A — Feature Name:**
-1. Find the container: `src/containers/{FeatureName}/` (local path or `gh api` — see above)
+1. Find the container: `src/containers/{FeatureName}/` in `glific/glific-frontend`
 2. Read the main list and form components (e.g. `FlowList.tsx`, `Flow.tsx`) to understand what the UI shows and does
-3. Read `src/routes/AuthenticatedRoute/AuthenticatedRoute.tsx` to find the URL route
+3. Read `src/routes/AuthenticatedRoute/AuthenticatedRoute.tsx` to find the URL route, and
+   `src/config/menu.ts` to see the left-menu path and any org flag gating the feature
 4. Check existing docs in `docs/` for the feature (search for the feature name in file names and content)
-5. Optionally read `src/graphql/queries/{Feature}.ts` to understand what data the feature displays
-6. **Verify against the running app, not just the source** — code comments can lag reality but a
+5. Read `src/graphql/queries/{Feature}.ts` to understand what data the feature displays
+6. **Check the backend for anything the UI only implies** — look in `glific/glific` when the doc
+   needs to state a hard limit, what a status value means, or what happens after submission. Don't
+   infer a number from a UI placeholder; confirm it in the backend.
+
+   Backend filenames are not predictable — HSM templates live in `session_template_type.ex` while
+   interactive messages live in `interactive_template_types.ex`. List or search rather than guess:
+   ```bash
+   gh api repos/glific/glific/contents/lib/glific_web/schema --jq '.[].name' | grep -i {keyword}
+   gh api repos/glific/glific/contents/lib/glific --jq '.[].name' | grep -i {keyword}
+   ```
+7. **Verify against the running app, not just the source** — code comments can lag reality but a
    live screenshot won't. Where feasible, confirm what you read in code (button labels, which
    dialogs still fire, which options are visible) by loading the actual page during the screenshot
    step (step 5 below) before writing anything.
@@ -47,8 +76,9 @@ test -d ../glific-frontend && echo "local checkout" || echo "no local checkout �
 **Mode B — PR Number:**
 1. `gh pr diff #PR_NUMBER --repo glific/glific-frontend` to see what changed
 2. Identify affected containers from the changed file paths
-3. Read the changed files in full to understand new behavior
-4. Check existing docs for the affected area
+3. Read the changed files in full from GitHub to understand new behavior
+4. Check whether the PR has a backend counterpart in `glific/glific` (`gh pr list --repo glific/glific --search {feature}`) — a new field or limit usually lands there too
+5. Check existing docs for the affected area
 
 ## 4. Determine Placement
 
@@ -66,15 +96,22 @@ Placement plan:
 
 ## 5. Capture Screenshots
 
+**Ask the user for credentials — URL, phone, password — before the first screenshot.** Point the
+script at the live/staging URL they give you, never at a local stack, and never read the values
+from `.env`. Ask once per session and reuse the same values for later runs. Read `screenshots.md`
+before asking; it has the exact wording and the security rules.
+
 Check for an existing recipe at `scripts/recipes/{feature-slug}.yaml`.
 
-**Recipe missing** → create it. Read `screenshots.md` for the exact format. Find `data-testid` values in the relevant container files.
+**Recipe missing** → create it. Read `screenshots.md` for the exact format. Find `data-testid` values
+in the relevant container files on GitHub.
 
 **Recipe exists** → review it against what you read in step 3. Add or update flows for any user path the doc will reference. Fix selectors if the UI has changed.
 
-Then run:
+Then run, passing the credentials the user just gave you inline:
 ```bash
-node scripts/screenshot.js {feature-slug}
+GLIFIC_URL={url} GLIFIC_PHONE={phone} GLIFIC_PASSWORD={password} \
+  node scripts/screenshot.js {feature-slug}
 ```
 
 Verify all expected files land in `static/img/{feature}/`. Iterate on any selector that misses — never ship a doc that references a non-existent image.
