@@ -36,11 +36,11 @@ credentials stop working.
 
 **Never source credentials from anywhere but that answer:**
 
-| Don't | Why |
-|---|---|
+| Don't                                                           | Why                                                                                  |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | Read `.env`, `.env.local`, or any dotfile for `GLIFIC_*` values | Whatever is in there was set for someone else's purpose, and may point at production |
-| Grep a file for the phone/password and pipe it into the command | Same thing, one step removed — still not the user's choice |
-| Write the values into `.env`, the recipe, or the script | Passwords do not belong in files, gitignored or not |
+| Grep a file for the phone/password and pipe it into the command | Same thing, one step removed — still not the user's choice                           |
+| Write the values into `.env`, the recipe, or the script         | Passwords do not belong in files, gitignored or not                                  |
 
 Pass the values inline to each invocation that needs them, so they live only in that command:
 
@@ -49,15 +49,9 @@ GLIFIC_URL={url} GLIFIC_PHONE={phone} GLIFIC_PASSWORD={password} \
   node scripts/screenshot.js {feature-slug}
 ```
 
-The script also reads `.env` as a convenience for humans running it by hand. Inline variables
-override it — do not fall back to it when the user hasn't answered. If the user declines to share
-credentials, write the doc with `:::info Screenshot coming soon` placeholders and hand them the
-command to run themselves.
-
-Note: the phone field on the login page is a **country-code selector + local-number input** —
-pass the number *without* the country code prefix (e.g. `7905556238`, not `+917905556238`), or
-`fill()` on `input[name="phoneNumber"]` will leave the field looking empty and login will silently
-not submit. If the user gives you a number with a `+91`, strip it before passing it.
+Note: pass `GLIFIC_PHONE` in whatever form the user gave it — `+917905556238`, `917905556238`, and
+`7905556238` all work. The runner reduces it to the local part itself, so don't hand-strip the
+country code. See **Auth flow** below for why that normalising step exists.
 
 Note this does **not** change where you read code: source always comes from GitHub
 (`glific/glific-frontend`, `glific/glific`), never from a local checkout.
@@ -81,34 +75,40 @@ GLIFIC_URL={url} GLIFIC_PHONE={phone} GLIFIC_PASSWORD={password} \
 Each recipe is a YAML file in `scripts/recipes/{feature-slug}.yaml`.
 
 ```yaml
-name: flows               # Human-readable name
-output_dir: flows         # Maps to static/img/{output_dir}/
+name: flows # Human-readable name
+output_dir: flows # Maps to static/img/{output_dir}/
 flows:
-  - name: flow_list       # Slug for this flow
+  - name: flow_list # Slug for this flow
     description: The list of all flows
-    required: true        # If true, failure aborts the recipe. If false, logs warning and continues.
+    required: true # If true, failure aborts the recipe. If false, logs warning and continues.
     steps:
-      - navigate: /flow                        # Navigate to this path
-      - wait: '[data-testid="flow-list"]'      # Wait for selector (CSS or data-testid)
-      - snap: flows_list.png                   # Take screenshot, save as this filename
-      - click: '[data-testid="add-flow"]'      # Click a selector
-      - wait_text: Create Flow                 # Wait for visible text to appear
+      - navigate: /flow # Navigate to this path
+      - wait: '[data-testid="flow-list"]' # Wait for selector (CSS or data-testid)
+      - snap: flows_list.png # Take screenshot, save as this filename
+      - click: '[data-testid="add-flow"]' # Click a selector
+      - wait_text: Create Flow # Wait for visible text to appear
       - snap: flows_create_dialog.png
 ```
 
 ### Step types
 
-| Step key | What it does |
-|----------|-------------|
-| `navigate: /path` | Go to `GLIFIC_URL + path` |
-| `wait: 'selector'` | Wait for CSS selector to appear (8s timeout) |
-| `wait_text: 'text'` | Wait for visible text to appear on the page |
-| `click: 'selector'` | Click a CSS selector |
-| `hover: 'selector'` | Hover the first match — for UI that only appears on hover (tooltips, row previews) |
-| `move_mouse_away: true` | Park the cursor in a corner so leftover hover state doesn't bleed into the next snap |
-| `snap: filename.png` | Take a full-viewport screenshot |
-| `snap: filename.png` + `element: 'selector'` | Crop to that element only — hides sidebar, nav, unrelated UI |
-| `sleep: 500` | Wait N milliseconds (use sparingly, prefer `wait`) |
+| Step key                                     | What it does                                                                                                           |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `navigate: /path`                            | Go to `GLIFIC_URL + path`, waiting only for `domcontentloaded` — **always follow with a `wait`**                       |
+| `wait: 'selector'`                           | Wait for CSS selector to appear (8s timeout)                                                                           |
+| `wait_text: 'text'`                          | Wait for visible text to appear on the page                                                                            |
+| `click: 'selector'`                          | Click a CSS selector                                                                                                   |
+| `click_optional: 'selector'`                 | Click it if it's there, move on if it isn't — for announcement banners, tips, and other UI that appears only sometimes |
+| `hover: 'selector'`                          | Hover the first match — for UI that only appears on hover (tooltips, row previews)                                     |
+| `move_mouse_away: true`                      | Park the cursor in a corner so leftover hover state doesn't bleed into the next snap                                   |
+| `snap: filename.png`                         | Take a full-viewport screenshot                                                                                        |
+| `snap: filename.png` + `element: 'selector'` | Crop to that element only — hides sidebar, nav, unrelated UI                                                           |
+| `sleep: 500`                                 | Wait N milliseconds (use sparingly, prefer `wait`)                                                                     |
+
+**`navigate` does not wait for the network to settle.** The app holds a websocket open and some list
+pages poll on a timer, so the network never goes idle and waiting for it would hang. What actually
+establishes that a page is ready is your `wait` step — a `navigate` with no `wait` after it will
+screenshot a half-rendered page.
 
 ### Element cropping
 
@@ -127,6 +127,7 @@ flows:
 ```
 
 Common element selectors:
+
 - Dialog/modal → `[role="dialog"]`
 - Named section → `[data-testid="..."]`
 - Main content only (no sidebar) → `main`
@@ -134,6 +135,7 @@ Common element selectors:
 ### Selector strategy
 
 Prefer in this order:
+
 1. `[data-testid="..."]` — most stable, survives CSS refactors
 2. ARIA role + name: `role=button[name="Create Flow"]`
 3. Visible text: use `wait_text` step, then screenshot
@@ -143,17 +145,49 @@ Glific's frontend has `data-testid` on most interactive elements. Check the cont
 
 ### Auth flow
 
-The script authenticates once per run using phone + password (Glific uses phone number login, not email). The session cookie is reused across all flows in the recipe.
+**The script logs in exactly once per run, no matter how many flows the recipe has.** It
+authenticates in a throwaway context, captures the browser `storageState`, and seeds every
+per-flow context with it. Each flow still gets its own context — that keeps `--video` recordings
+separate — but it opens already signed in.
+
+Glific keeps its session in `localStorage` (`glific_session`, `glific_user`,
+`organizationServices`), not in a cookie. Playwright's `storageState()` captures `localStorage`
+alongside cookies, which is what makes the one-login approach work.
+
+Login is retried up to **3 times** before the run gives up, because a cold or busy instance can
+take a while to hand back a session.
 
 Login selectors (from `Auth.tsx` / `Login.tsx`):
+
 - Phone field: `input[name="phoneNumber"]`
 - Password field: `input[name="password"]`
 - Submit button: `[data-testid="SubmitButton"]`
-- Post-login: waits for URL to contain `/chat`
+- Post-login: waits for URL to contain `/chat` (45s — the first load after a deploy is slow)
+
+If you ever see the login form appear once per flow, the `storageState` is not reaching the
+per-flow contexts — fix the runner rather than living with 13 logins in a 13-flow recipe. Don't add
+a login step to a recipe; authentication is the runner's job, not the recipe's.
+
+#### The phone field
+
+`PhoneInput` **prepends the dial code to whatever you type**. That makes it the single most
+fragile part of the run, and the runner handles three separate traps so recipes don't have to:
+
+- Filling it with a number that already carries the country code produces `+91917905556238`, and
+  the API answers **401**. The runner reduces `GLIFIC_PHONE` to its local part first, so any input
+  form works.
+- The dial code is inserted **asynchronously after mount**. Filling before it lands gives a value
+  with no code at all, so the runner waits for a leading `+<digit>` in the field before typing.
+- **Never clear the field first.** Clearing removes the dial code, leaving the component nothing to
+  prepend.
+
+After filling, the runner verifies the field reads `+{dialCode}{local}` and retries up to 3 times,
+failing with the actual field contents rather than silently submitting a wrong number. The dial
+code defaults to `91`; a non-`91` number needs that default changed in `screenshot.js`.
 
 ### Nuances
 
-- The PhoneInput component renders a flag picker + text input. Fill the text portion via `input[name="phoneNumber"]` with the number **without** the country code — the code is a separate selector next to it, and including it (e.g. `+917905556238`) leaves the field empty and login never fires.
+- The phone field needs care, but the runner already handles it — see **The phone field** above. Don't normalise `GLIFIC_PHONE` yourself or add login steps to a recipe.
 - After login, some features require seed data (e.g., Flow list needs existing flows). Use a demo account with pre-created data.
 - The frontend uses Apollo Client with WebSocket subscriptions — some pages load data asynchronously. Use `wait` steps (not `sleep`) to wait for data to appear.
 - **List/table pages render skeleton loaders first** (gray placeholder rows) before real data arrives. Waiting only for the page header or table shell produces a screenshot full of loading skeletons. Wait for content that only exists once data has loaded — an icon inside a row's actions column, real row text, or a correct pagination count — not just the container.
