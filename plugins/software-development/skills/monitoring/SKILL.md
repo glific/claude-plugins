@@ -306,10 +306,10 @@ Pipe the finished report into the poster:
 node scripts/post-to-discord.mjs < report.md
 ```
 
-It posts the headline summary inline and attaches the full report as a file.
-Set `DISCORD_WEBHOOK_URL` to a channel webhook (Server Settings → Integrations →
-Webhooks). With no webhook set it does a dry run and prints the summary, which is
-useful for the first manual test.
+It posts the headline summary inline and attaches the full report as a file. The
+channel webhook URL (Server Settings → Integrations → Webhooks) is hardcoded in
+`scripts/post-to-discord.mjs`. With no webhook set it does a dry run and prints
+the summary, which is useful for the first manual test.
 
 ---
 
