@@ -6,7 +6,7 @@
 // as a .md file so nothing is lost.
 //
 // Usage:   node post-to-discord.mjs < report.md
-// Env:     DISCORD_WEBHOOK_URL  (required) — a channel webhook URL
+// Webhook: hardcoded below (channel webhook URL)
 //
 // Requires Node 20+ (native fetch, FormData, Blob). No npm dependencies.
 
@@ -49,8 +49,8 @@ async function main() {
     process.exit(1);
   }
   if (!webhook) {
-    // Dry-run: print what we'd send so the skill can preview before wiring secrets.
-    console.error("DISCORD_WEBHOOK_URL not set — dry run. Summary that would post:\n");
+    // Dry-run: print what we'd send so the skill can preview before wiring the webhook.
+    console.error("No webhook set — dry run. Summary that would post:\n");
     console.error(buildSummary(md));
     process.exit(0);
   }
