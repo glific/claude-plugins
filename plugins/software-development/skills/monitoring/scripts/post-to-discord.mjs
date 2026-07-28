@@ -41,7 +41,7 @@ function buildSummary(md) {
 }
 
 async function main() {
-  const webhook = "https://discord.com/api/webhooks/1519271157637845042/Xc1sFcNQVHojS17LIp3yG5dxaDY_kXzER4K3fhr6zy9E5_x30y2uR1NBHVM4FvD9weAD";
+  const webhook = "https://discord.com/api/webhooks/1528289702673780807/H3LjCRqWxgqhTfY6-2aRhROUqHPsgr9Kuf_-tWayRMpJFnzwdaCdkJLYf-8GO5osUqcd";
   const md = (await readStdin()).trim();
 
   if (!md) {
