@@ -45,16 +45,32 @@ Examples:
 
 ## Markdown syntax
 
-Docusaurus serves `static/` at the site root. Always use `/img/` prefix (not `static/img/`):
+Use a **relative path** from the doc file to the image under `static/img/`, not the absolute
+`/img/...` site-root path:
 
 ```markdown
-![Flows list](/img/flows/flows_list.png)
+![Flows list](../../static/img/flows/flows_list.png)
 ```
+
+Count `..` segments from the doc file's own directory back to the repo root, then descend into
+`static/img/...` (e.g. a file at `docs/4. Product Features/06.  HSM Templates.md` needs `../..` to
+reach the repo root).
+
+**Why relative, not `/img/...`:** an absolute `/img/...` path only resolves once the site is built
+and deployed by Docusaurus — GitHub's markdown renderer resolves a leading `/` against
+`github.com` itself, so the image shows as broken on the raw file view and in PR diffs until the
+branch merges and the site rebuilds. A relative path resolves both ways: GitHub renders it inline
+immediately (PR diff, raw file view) by resolving it against the file's repo location, and
+Docusaurus's markdown loader bundles the same relative reference through webpack when the site
+builds. Verified against `glific/docs` main: no existing page actually uses the absolute `/img/`
+form — confirm this still holds (`git grep -c '](/img/' origin/main -- docs/`) before trusting it
+blindly if the repo's asset pipeline ever changes.
 
 Never use:
 - `import Image from ...` + JSX
-- Absolute GitHub CDN URLs for new images
-- Relative paths like `../../static/img/...`
+- Absolute GitHub CDN URLs (`user-attachments`, `raw.githubusercontent.com`) for new images — those
+  require a manual browser upload or a branch-pinned URL; relative paths need neither
+- Absolute `/img/...` site-root paths — breaks PR/raw-file preview, see above
 
 ## Screenshot placement
 

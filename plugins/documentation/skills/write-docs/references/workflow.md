@@ -127,7 +127,8 @@ Follow `style-writing.md` for voice and format. The most common mistake: writing
 ## 7. Validate
 
 - [ ] All images referenced in the doc exist in `static/img/{feature}/`
-- [ ] Image paths use `/img/` prefix (Docusaurus convention), not `static/img/`
+- [ ] Image paths use a relative path from the doc file to `static/img/{feature}/...`, not the
+      absolute `/img/...` form (breaks GitHub PR/raw-file preview — see `style-images.md`)
 - [ ] No new GitHub CDN image URLs (only old untouched pages keep those)
 - [ ] Page header has the read-time badge and difficulty level
 - [ ] Page matches the correct section template from `style-page.md`

@@ -19,7 +19,7 @@ Different sections use different templates. Match the template to the section ty
 
 {Step-by-step instructions or explanation.}
 
-![{alt text}](/img/{feature}/{filename}.png)
+![{alt text}]({relative path to static/img/{feature}/{filename}.png} — see style-images.md)
 
 ## {Second capability or action}
 
