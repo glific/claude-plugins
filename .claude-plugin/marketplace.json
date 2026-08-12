@@ -25,6 +25,11 @@
       "description": "Writing user-facing documentation for glific/docs (write-docs skill)"
     },
     {
+      "name": "flow-webhook-triage",
+      "source": "./plugins/flow-webhook-triage",
+      "description": "Daily triage of Glific flow-webhook errors — diagnoses AppSignal incidents against the code and records them in a shared sheet for trend analysis"
+    },
+    {
       "name": "hiring",
       "source": "./plugins/hiring",
       "description": "Hiring assistant for Glific"
